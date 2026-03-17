@@ -8,13 +8,13 @@ from tkinter import *
 from tkinter import filedialog
 from tkinter import ttk
 from PIL import Image
-from picamera2 import Picamera2, Preview
+#from picamera2 import Picamera2, Preview
 import time
 from datetime import datetime, timedelta
 import shutil
 import os
 import time
-from matrix11x7 import Matrix11x7
+#from matrix11x7 import Matrix11x7
 import board
 import adafruit_dht
 import subprocess
@@ -56,8 +56,8 @@ def take_pict(par, dir):
 
 
 # specify wich port is use by DHT captor
-dev = adafruit_dht.DHT22(board.D4, use_pulseio=False)
-matrix11x7 = Matrix11x7()
+#dev = adafruit_dht.DHT22(board.D4, use_pulseio=False)
+#matrix11x7 = Matrix11x7()
 
 
 class Img():
