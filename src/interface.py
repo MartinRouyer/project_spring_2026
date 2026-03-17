@@ -1,4 +1,4 @@
-éé#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Author : MATHIEU Theo
 github : https://github.com/tzebre
