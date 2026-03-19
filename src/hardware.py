@@ -1,3 +1,6 @@
+import random
+import time
+
 class HardwareInterface:
     def get_temperature(self): raise NotImplementedError
     def get_humidity(self): raise NotImplementedError
@@ -30,6 +33,11 @@ class RealHardware(HardwareInterface):
         self.GPIO.setup(out_pins, self.GPIO.OUT) # Set pin as an out pin, default is neutral
         self.GPIO.output(self.PIN_FAN, self.GPIO.LOW) # Shut down on startup
 
+        self.heat_state = False
+        self.fan_state = False
+        self.mist_state = False
+        self.light_state = 0
+
 
     def get_temperature(self):
         try:
@@ -46,42 +54,46 @@ class RealHardware(HardwareInterface):
             return None
         
     def set_fan(self, state: bool):
-        if state:
-            self.GPIO.output(self.PIN_FAN, self.GPIO.HIGH)
-            print("Fan ON")
-        else:
-            self.GPIO.output(self.PIN_FAN, self.GPIO.LOW)
-            print("Fan OFF")
+        if state != self.fan_state:
+            self.fan_state = state
+
+            if state:
+                self.GPIO.output(self.PIN_FAN, self.GPIO.HIGH)
+                print("Fan ON")
+            else:
+                self.GPIO.output(self.PIN_FAN, self.GPIO.LOW)
+                print("Fan OFF")
 
     def set_light(self, percent: int):
-        """
-        original name : set_led
-        Set led brightness at percent value
-        :param percent:
-        :return:
-        """
-        matrix11x7.fill(percent / 100, 0, 0, 11, 7)
-        matrix11x7.show()
+        if percent != self.light_state:
+            self.light_state = percent
+
+            matrix11x7.fill(percent / 100, 0, 0, 11, 7)
+            matrix11x7.show()
 
     def set_mist(self, state: bool):
-        if state:
-            self.GPIO.output(self.PIN_MIST, self.GPIO.HIGH)
-            print("Mist ON")
-        else:
-            self.GPIO.output(self.PIN_MIST, self.GPIO.LOW)
-            print("Mist OFF")
+        if state != self.mist_state:
+            self.mist_state = state
+
+            if state:
+                self.GPIO.output(self.PIN_MIST, self.GPIO.HIGH)
+                print("Mist ON")
+            else:
+                self.GPIO.output(self.PIN_MIST, self.GPIO.LOW)
+                print("Mist OFF")
 
     def set_heat(self, state: bool):
-        if state:
-            self.GPIO.output(self.PIN_HEAT, self.GPIO.HIGH)
-            print("Heat ON")
-        else:
-            self.GPIO.output(self.PIN_HEAT, self.GPIO.LOW)
-            print("Heat OFF")
+        if state != self.heat_state:
+            self.heat_state = state
+
+            if state:
+                self.GPIO.output(self.PIN_HEAT, self.GPIO.HIGH)
+                print("Heat ON")
+            else:
+                self.GPIO.output(self.PIN_HEAT, self.GPIO.LOW)
+                print("Heat OFF")
 
     def take_pict(self, filename: str, params: dict):
-        """
-        """
 
         set_led(par.light)
         speed = par.time_exp
@@ -94,29 +106,57 @@ class RealHardware(HardwareInterface):
         set_led(0)
 
 
-
 class MockHardware(HardwareInterface):
+    def __init__(self):
+        self.temp = 20.0
+        self.hum = 50.0
+        
+        self.heat_state = False
+        self.fan_state = False
+        self.mist_state = False
+        self.light_state = 0
+        
+        print("[MOCK] Matériel simulé initialisé.")
+
     def get_temperature(self):
-        return 1
+        # Simulation de l'évolution
+        if self.heat_state:
+            self.temp += 0.2
+        elif self.fan_state:
+            self.temp -= 0.1
+        else:
+            self.temp += (20.0 - self.temp) * 0.05
+            
+        return round(self.temp + random.uniform(-0.1, 0.1), 2)
+
     def get_humidity(self):
-        return 1
+        if self.mist_state:
+            self.hum += 2.0
+        elif self.fan_state:
+            self.hum -= 1.0
+        
+        self.hum = max(0, min(100, self.hum))
+        return round(self.hum + random.uniform(-0.5, 0.5), 2)
+
     def set_fan(self, state: bool):
-        print(f"Fan : {'ON' if state else 'OFF'}")
-    def set_light(self, state: bool):
-        print(f"Light : {'ON' if state else 'OFF'}")
+        if state != self.fan_state:
+            self.fan_state = state
+            print(f"Fan : {'ON' if state else 'OFF'}")
+
+    def set_light(self, percent: int):
+        if percent != self.light_state:
+            self.light_state = percent
+            print(f"Light : {percent}%")
+
+    def set_mist(self, state: bool):
+        if state != self.mist_state:
+            self.mist_state = state
+            print(f"Mist : {'ON' if state else 'OFF'}")
+
+    def set_heat(self, state: bool):
+        if state != self.heat_state:
+            self.heat_state = state
+            print(f"Heat : {'ON' if state else 'OFF'}")
+
     def take_pict(self, filename: str):
-        print(f"Photo stored in : {filename}")
-
-
-
-
-
-# In interface.py :
-mode_simu = True
-
-if mode_simu :
-    hardware = MockHardware(HardwareInterface)
-else : 
-    hardware = RealHardware(HardwareInterface)
-
-hardware.set_fan(True)
+        print(f"Picture stored in -> {filename}")
