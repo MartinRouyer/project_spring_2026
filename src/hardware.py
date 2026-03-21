@@ -116,10 +116,9 @@ class MockHardware(HardwareInterface):
         self.mist_state = False
         self.light_state = 0
         
-        print("[MOCK] Matériel simulé initialisé.")
+        print("Mock hardware loaded")
 
     def get_temperature(self):
-        # Simulation de l'évolution
         if self.heat_state:
             self.temp += 0.2
         elif self.fan_state:

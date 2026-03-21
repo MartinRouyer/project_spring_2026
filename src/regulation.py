@@ -43,7 +43,7 @@ class Regulation:
         
         while self.running:
 
-            print(' -- new loop -- ')
+            print(' -- new control loop -- ')
             temp = self.hw.get_temperature()
             hum = self.hw.get_humidity()
 
@@ -53,17 +53,25 @@ class Regulation:
             # Temp
             if temp < (self.target_temp - self.margin):
                 self.hw.set_heat(True)
+                self.hw.set_fan(False)
                 self.live_data["heat"] = True
+                self.live_data["fan"] = False
             elif temp > (self.target_temp + self.margin):
                 self.hw.set_heat(False)
+                self.hw.set_fan(True)
                 self.live_data["heat"] = False
+                self.live_data["fan"] = True
 
             # Humidity
             if hum < (self.target_hum - 5.0):
                 self.hw.set_mist(True)
+                self.hw.set_fan(False)
                 self.live_data["mist"] = True
+                self.live_data["fan"] = False
             elif hum > self.target_hum:
                 self.hw.set_mist(False)
+                self.hw.set_fan(True)
                 self.live_data["mist"] = False
+                self.live_data["fan"] = True
 
             time.sleep(5)
