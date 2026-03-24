@@ -1,6 +1,7 @@
 from hardware import MockHardware, RealHardware
 from regulation import Regulation
 from interface import Interface
+from timelapse import TimelapseManager
 
 mode_simu = True
 
@@ -11,6 +12,11 @@ else :
 
 regul = Regulation(hardware)
 
-app = Interface(regul) 
+timelapse = TimelapseManager(None)
+
+app = Interface(regul, timelapse)
+
+timelapse.gui = app
+
 regul.start()
 app.mainloop()

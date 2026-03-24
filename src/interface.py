@@ -2,10 +2,11 @@ import tkinter as tk
 from tkinter import ttk
 
 class Interface(tk.Tk):
-    def __init__(self, regul):
+    def __init__(self, regul, timelapse_manager):
         super().__init__()
         
         self.regul = regul
+        self.timelapse = timelapse_manager
         self.title("Arabidopsis infection monitoring")
         self.geometry("400x400")
 
@@ -54,15 +55,14 @@ class Interface(tk.Tk):
             self.status_indicators[module] = indicator
 
 
-        
 
         # Timelapse
-
         self.setup_timelapse_interface()
 
-        tk.Button(self, text="Start Timelapse", command=self.start_timelapse).pack(side="left")
+        tk.Button(self, text="Start Timelapse", command=self.timelapse.start_timelapse).pack(side="left")
 
         self.update_gui()
+
 
     def setup_timelapse_interface(self):
         # Need to implement all parameters
@@ -95,7 +95,7 @@ class Interface(tk.Tk):
             self.timelapse_entries[param_id] = entry
 
         
-
+    '''
     def get_timelapse_params(self):
         timelapse_params = {}
         
@@ -107,16 +107,26 @@ class Interface(tk.Tk):
 
     def start_timelapse(self):
         timelapse_params = self.get_timelapse_params()
-        # Need to implement timelapse logic with .after 
-        self.picts_left = timelapse_params[length] // timelapse_params[interval]
+        self.ms_interval = int(params['interval']) * 60000
+        self.picts_left = int(timelapse_params['length']) // int(timelapse_params['interval'])
         self.picts_count = 0 
         self.timelapse_active = True
 
-    # To be refined especially for parameters
-    def run_timelapse(self, params):
-        if self.photos_restantes > 0 and self.timelapse_active:
+    def run_timelapse(self):
+        if self.timelapse_active and self.picts_left > 0:
+            
+            params = self.get_timelapse_params()
             self.regul.hw.take_pict(params)
 
+            self.picts_left -= 1
+            self.picts_count += 1
+            print(f"{self.picts_count} picture taken. {self.picts_left} picts remaining")
+
+            self.after(self.ms_interval, self.run_timelapse)
+        else:
+            self.timelapse_active = False
+            print("Timelapse end")
+    '''
 
     def update_target_temp(self):
         try:
