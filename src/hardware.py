@@ -95,15 +95,17 @@ class RealHardware(HardwareInterface):
 
     def take_pict(self, filename: str, params: dict):
 
-        set_led(par.light)
-        speed = par.time_exp
-        iso = par.iso
-        cmd = ["libcamera-still", "-o", dir + par.name, "--shutter", str(speed), "--immediate", "-n", "--denoise",
+        # A definir
+        self.set_light(50)
+        speed = 1000000
+        iso = 100
+
+        cmd = ["libcamera-still", "-o", filename, "--shutter", str(speed), "--gain", str(iso), "--immediate", "-n", "--denoise",
             "cdn_hq"]
-        print(cmd)
+        print(f"Running :{cmd}")
         subprocess.call(cmd)
-        print(par.name + " taked")
-        set_led(0)
+        print(filename + " saved")
+        self.set_light(0)
 
 
 class MockHardware(HardwareInterface):
@@ -158,4 +160,12 @@ class MockHardware(HardwareInterface):
             print(f"Heat : {'ON' if state else 'OFF'}")
 
     def take_pict(self, filename: str):
-        print(f"Picture stored in -> {filename}")
+        import os
+        from PIL import Image, ImageDraw
+    
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        img = Image.new("RGB", (640, 480), color=(34, 139, 34))
+        draw = ImageDraw.Draw(img)
+        draw.text((10, 10), filename, fill=(255, 255, 255))
+        img.save(filename)
+        print(f"[Mocking] Picture saved -> {filename}")

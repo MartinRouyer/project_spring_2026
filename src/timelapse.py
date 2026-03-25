@@ -23,12 +23,22 @@ class TimelapseManager:
         print(f"Timelapse lauched : {self.picts_left} pictures to be taken.")
         self.run_timelapse()
         
+    def stop_timelapse(self):
+        self.active = False
+        print("User Stop Request")
 
     def run_timelapse(self):
         if self.active and self.picts_left > 0:
+            from datetime import datetime
+            import os
             
             params = self.get_timelapse_params()
-            self.gui.regul.hw.take_pict(params)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            folder = self.gui.ent_folder.get()
+            exp_name = params['exp_name']
+            filename = os.path.join(folder, f"{exp_name}_{self.picts_count:03d}_{timestamp}.jpg")
+
+            self.gui.regul.hw.take_pict(filename)
 
             self.picts_left -= 1
             self.picts_count += 1

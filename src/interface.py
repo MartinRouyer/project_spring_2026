@@ -59,18 +59,33 @@ class Interface(tk.Tk):
         # Timelapse
         self.setup_timelapse_interface()
 
-        tk.Button(self, text="Start Timelapse", command=self.timelapse.start_timelapse).pack(side="left")
+        row_btn = tk.Frame(self)
+        row_btn.pack(pady=5)
+
+        tk.Button(self, text="Start Timelapse", command=self.timelapse.start_timelapse).pack(side="left", padx=5)
+
+        tk.Button(self, text="Stop Timelapse", command=self.timelapse.stop_timelapse).pack(side="left", padx=5)
+
+        tk.Button(self, text="Reset", command=self.reset_timelapse_params).pack(side="left", padx=5)
 
         self.update_gui()
 
 
     def setup_timelapse_interface(self):
-        # Need to implement all parameters
         params_timelaps = {
+            "exp_name": "Experiment name:",
             "length": "Timelapse length (min):",
-            "interval": "Take pict every (min) :", 
+            "interval": "Take pict every (min):", 
             "iso": "ISO for photo:",
             "name": "Base Filename:"
+        }
+
+        self.default_values = {
+            "exp_name": "exp_001",
+            "length": "180",
+            "interval": "20",
+            "iso": "100",
+            "name": "test"
         }
 
         self.timelapse_entries = {}
@@ -79,20 +94,25 @@ class Interface(tk.Tk):
             row = tk.Frame(self)
             row.pack(fill="x", pady=2)
             tk.Label(row, text=param_text, width=20, anchor="w").pack(side="left")
-
             entry = tk.Entry(row, width=10)
-            default_values = {
-            "length": "180",
-            "interval": "20", 
-            "iso": "100",
-            "name": "test"
-            }
-            
-            entry.insert(0, default_values.get(param_id, ""))
-            
+            entry.insert(0, self.default_values.get(param_id, ""))
             entry.pack(side="left", padx=5)
-
             self.timelapse_entries[param_id] = entry
+
+        row_folder = tk.Frame(self)
+        row_folder.pack(fill="x", pady=2)
+        tk.Label(row_folder, text="Save folder:", width=20, anchor="w").pack(side="left")
+        self.ent_folder = tk.Entry(row_folder, width=20)
+        self.ent_folder.insert(0, "/home/pi/timelapse")
+        self.ent_folder.pack(side="left", padx=5)
+        tk.Button(row_folder, text="Browse", command=self.browse_folder).pack(side="left")
+
+
+    def reset_timelapse_params(self):
+        for param_id, entry in self.timelapse_entries.items():
+            entry.delete(0, tk.END)
+            entry.insert(0, self.default_values[param_id])
+        print("Reset parameters")
 
         
     '''
@@ -159,3 +179,11 @@ class Interface(tk.Tk):
             self.status_indicators[module].config(bg=color)
 
         self.after(1000, self.update_gui)
+
+    def browse_folder(self):
+        from tkinter import filedialog
+        folder = filedialog.askdirectory()
+        if folder:
+            self.ent_folder.delete(0, tk.END)
+            self.ent_folder.insert(0, folder)
+            print(f"Folder selected : {folder}")
