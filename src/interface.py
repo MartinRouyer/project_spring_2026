@@ -8,7 +8,7 @@ class Interface(tk.Tk):
         self.regul = regul
         self.timelapse = timelapse_manager
         self.title("Arabidopsis infection monitoring")
-        self.geometry("400x400")
+        self.geometry("400x500")
 
         # Sensors
 

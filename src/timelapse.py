@@ -15,11 +15,21 @@ class TimelapseManager:
         return timelapse_params
 
     def start_timelapse(self):
+        import os
         params = self.get_timelapse_params()
         self.ms_interval = int(params['interval']) * 60000
         self.picts_left = int(params['length']) // int(params['interval'])
         self.picts_count = 0 
         self.active = True
+
+        folder = self.gui.ent_folder.get()
+        exp_name = params['exp_name']
+        self.gui.regul.log_path = os.path.join(folder, f"{exp_name}_data.csv")
+
+        temp = self.gui.regul.hw.get_temperature()
+        hum = self.gui.regul.hw.get_humidity()
+        self.gui.regul._log_data(temp, hum)
+
         print(f"Timelapse lauched : {self.picts_left} pictures to be taken.")
         self.run_timelapse()
         
@@ -39,6 +49,7 @@ class TimelapseManager:
             filename = os.path.join(folder, f"{exp_name}_{self.picts_count:03d}_{timestamp}.jpg")
 
             self.gui.regul.hw.take_pict(filename)
+            self._embed_exif(filename)
 
             self.picts_left -= 1
             self.picts_count += 1
@@ -48,3 +59,31 @@ class TimelapseManager:
         else:
             self.active = False
             print("Timelapse end")
+
+    def _embed_exif(self, filename):
+        import piexif
+        import csv
+        import os
+    
+        if not self.gui.regul.log_path:
+            return
+        
+        if not os.path.isfile(self.gui.regul.log_path):
+            print("[EXIF] CSV not yet created, skipping.")
+            return
+    
+        with open(self.gui.regul.log_path, 'r') as f:
+            rows = list(csv.DictReader(f))
+        if not rows:
+            return
+    
+        last_row = rows[-1]
+    
+        # Commentaire exif dans UserComment
+        comment = ", ".join(f"{k}={v}" for k, v in last_row.items())
+    
+        exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}}
+        exif_dict["Exif"][piexif.ExifIFD.UserComment] = comment.encode()
+        exif_bytes = piexif.dump(exif_dict)
+        piexif.insert(exif_bytes, filename)
+        print(f"Metadata embedded -> {comment}")

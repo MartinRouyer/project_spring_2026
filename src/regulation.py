@@ -1,5 +1,8 @@
 import threading
 import time
+import csv
+from datetime import datetime
+import os
 
 class Regulation:
     def __init__(self, hardware):
@@ -21,6 +24,25 @@ class Regulation:
             "fan": False,
             "status": "Stoped"
         }
+
+        self.log_path = None
+
+    def _log_data(self, temp, hum):
+        if self.log_path is None:
+            return
+        row = {
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "temp": temp,
+            "hum": hum,
+            # ajouter métrique ici
+        }
+        file_exists = os.path.isfile(self.log_path)
+        with open(self.log_path, 'a', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=row.keys())
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow(row)
+
 
     def start(self):
         if not self.running:
@@ -49,6 +71,7 @@ class Regulation:
 
             self.live_data["temp"] = temp
             self.live_data["hum"] = hum
+            self._log_data(temp, hum)
                 
             # Temp
             if temp < (self.target_temp - self.margin):
