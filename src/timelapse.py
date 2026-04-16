@@ -48,7 +48,7 @@ class TimelapseManager:
             exp_name = params['exp_name']
             filename = os.path.join(folder, f"{exp_name}_{self.picts_count:03d}_{timestamp}.jpg")
 
-            self.gui.regul.hw.take_pict(filename)
+            self.gui.regul.hw.take_pict(filename,params)
             self._embed_exif(filename)
 
             self.picts_left -= 1

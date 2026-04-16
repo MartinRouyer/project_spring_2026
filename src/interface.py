@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
+import json
+from tkinter import filedialog, messagebox
 
 class Interface(tk.Tk):
     def __init__(self, regul, timelapse_manager):
@@ -8,7 +10,7 @@ class Interface(tk.Tk):
         self.regul = regul
         self.timelapse = timelapse_manager
         self.title("Arabidopsis infection monitoring")
-        self.geometry("400x500")
+        self.geometry("400x700")
 
         # Sensors
 
@@ -55,18 +57,30 @@ class Interface(tk.Tk):
             self.status_indicators[module] = indicator
 
 
-
         # Timelapse
         self.setup_timelapse_interface()
 
         row_btn = tk.Frame(self)
-        row_btn.pack(pady=5)
+        row_btn.pack(fill="x", pady=5, anchor="w")
 
-        tk.Button(self, text="Start Timelapse", command=self.timelapse.start_timelapse).pack(side="left", padx=5)
+        tk.Button(row_btn, text="Start Timelapse", command=self.timelapse.start_timelapse).pack(side="left", padx=5)
 
-        tk.Button(self, text="Stop Timelapse", command=self.timelapse.stop_timelapse).pack(side="left", padx=5)
+        tk.Button(row_btn, text="Stop Timelapse", command=self.timelapse.stop_timelapse).pack(side="left", padx=5)
 
-        tk.Button(self, text="Reset", command=self.reset_timelapse_params).pack(side="left", padx=5)
+        tk.Button(row_btn, text="Reset", command=self.reset_timelapse_params).pack(side="left", padx=5)
+
+        # Templating
+        row_template = tk.Frame(self)
+        row_template.pack(fill="x", pady=5, anchor="w")
+
+        tk.Label(row_template, text="Parameters template :").pack(side="left")
+        tk.Button(row_template, text="Export", command=self.export_template).pack(side="left", padx=5)
+        tk.Button(row_template, text="Import", command=self.import_template).pack(side="left", padx=5)
+
+        # Live preview
+        self.preview_on = False
+
+        self.btn_preview = tk.Button(self, text="Start live preview", command=self.toggle_camera_preview).pack(side="left", padx=5)
 
         self.update_gui()
 
@@ -114,40 +128,6 @@ class Interface(tk.Tk):
             entry.insert(0, self.default_values[param_id])
         print("Reset parameters")
 
-        
-    '''
-    def get_timelapse_params(self):
-        timelapse_params = {}
-        
-        for param_id, entry_widget in self.timelapse_entries.items():
-            timelapse_params[param_id] = entry_widget.get()
-            
-        return timelapse_params
-
-
-    def start_timelapse(self):
-        timelapse_params = self.get_timelapse_params()
-        self.ms_interval = int(params['interval']) * 60000
-        self.picts_left = int(timelapse_params['length']) // int(timelapse_params['interval'])
-        self.picts_count = 0 
-        self.timelapse_active = True
-
-    def run_timelapse(self):
-        if self.timelapse_active and self.picts_left > 0:
-            
-            params = self.get_timelapse_params()
-            self.regul.hw.take_pict(params)
-
-            self.picts_left -= 1
-            self.picts_count += 1
-            print(f"{self.picts_count} picture taken. {self.picts_left} picts remaining")
-
-            self.after(self.ms_interval, self.run_timelapse)
-        else:
-            self.timelapse_active = False
-            print("Timelapse end")
-    '''
-
     def update_target_temp(self):
         try:
             val = float(self.ent_temp.get())
@@ -187,3 +167,76 @@ class Interface(tk.Tk):
             self.ent_folder.delete(0, tk.END)
             self.ent_folder.insert(0, folder)
             print(f"Folder selected : {folder}")
+
+    def setup_template_interface(self):
+        tk.Button(self, text="Export", command=self.export_template).pack(side="left")
+        tk.Button(self, text="Import", command=self.import_template).pack(side="left")
+
+    def export_template(self):
+        data = {
+            "target_temp": self.ent_temp.get(),
+            "target_hum": self.ent_hum.get(),
+            "folder": self.ent_folder.get(),
+            "timelapse_params": {id: entry.get() for id, entry in self.timelapse_entries.items()}
+        }
+
+        filepath = filedialog.asksaveasfilename(
+            defaultextension=".json",
+            initialfile=f".json",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+            title="Export Template"
+        )
+
+        if filepath:
+            try:
+                with open(filepath, 'w') as f:
+                    json.dump(data, f, indent=4)
+                messagebox.showinfo('Done',f'Successfully saved template : {f}')
+                print(f"Template saved in : {filepath}")
+            except Exception as e:
+                messagebox.showerror("Error", {e})
+
+    def import_template(self):
+        filepath = filedialog.askopenfilename(filetypes=[("JSON files", "*.json")])
+        if not filepath:
+            return
+
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            # Update values for all params
+            self.ent_temp.delete(0, tk.END)
+            self.ent_temp.insert(0, data.get("target_temp", ""))
+            
+            self.ent_hum.delete(0, tk.END)
+            self.ent_hum.insert(0, data.get("target_hum", ""))
+            
+            self.ent_folder.delete(0, tk.END)
+            self.ent_folder.insert(0, data.get("folder", ""))
+
+            t_params = data.get("timelapse_params", {})
+            for p_id, value in t_params.items():
+                if p_id in self.timelapse_entries:
+                    self.timelapse_entries[p_id].delete(0, tk.END)
+                    self.timelapse_entries[p_id].insert(0, value)
+
+            self.update_target_temp()
+            self.update_target_hum()
+            
+            messagebox.showinfo('Done',f'Successfully loaded template : {filepath}')
+            print(f"Tamplate loaded from : {filepath}")
+        except Exception as e:
+            messagebox.showerror("Error", {e})
+
+    
+    def toggle_camera_preview(self):
+        # Act like a switch
+        self.preview_on = not self.preview_on
+        
+        if self.preview_on:
+            self.regul.hw.live_preview(True)
+            self.btn_preview.config(text="Stop live preview")
+        else:
+            self.regul.hw.live_preview(False)
+            self.btn_preview.config(text="Start live preview")

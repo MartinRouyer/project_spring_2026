@@ -8,7 +8,8 @@ class HardwareInterface:
     def set_light(self, state: bool): raise NotImplementedError
     def set_mist(self, state: bool): raise NotImplementedError
     def set_heat(self, state: bool): raise NotImplementedError
-    def take_pict(self, filename: str): raise NotImplementedError
+    def take_pict(self, filename: str, params: dict): raise NotImplementedError
+    def live_preview(self,state: bool): raise NotImplementedError
 
 
 
@@ -21,6 +22,9 @@ class RealHardware(HardwareInterface):
         
         self.dev = adafruit_dht.DHT22(board.D4, use_pulseio=False)
         self.matrix11x7 = Matrix11x7()
+
+        self.picam2 = Picamera2()
+        self.picam2.start()
 
         self.PIN_FAN = 1
         self.PIN_MIST = 2
@@ -93,6 +97,7 @@ class RealHardware(HardwareInterface):
                 self.GPIO.output(self.PIN_HEAT, self.GPIO.LOW)
                 print("Heat OFF")
 
+    '''
     def take_pict(self, filename: str, params: dict):
 
         # A definir
@@ -106,6 +111,19 @@ class RealHardware(HardwareInterface):
         subprocess.call(cmd)
         print(filename + " saved")
         self.set_light(0)
+    '''
+    def take_pict(self, filename: str, params: dict):
+        # ? Params
+        self.set_light(50)
+        self.picam2.capture_file(filename)
+        self.set_light(0)
+        print(f"Pict saved in : {filename}")
+
+    def live_preview(self, state: bool):
+        if state:
+            self.picam2.start_preview(Preview.QTGL)
+        else:
+            self.picam2.stop_preview()
 
 
 class MockHardware(HardwareInterface):
@@ -169,3 +187,6 @@ class MockHardware(HardwareInterface):
         draw.text((10, 10), filename, fill=(255, 255, 255))
         img.save(filename)
         print(f"[Mocking] Picture saved -> {filename}")
+
+    def live_preview(self, state: bool):
+        print(f"Live Preview : {'ON' if state else 'OFF'}")
