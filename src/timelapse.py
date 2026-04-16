@@ -30,6 +30,10 @@ class TimelapseManager:
         hum = self.gui.regul.hw.get_humidity()
         self.gui.regul._log_data(temp, hum)
 
+        self.gui.regul.day_start = params['day_start']
+        self.gui.regul.day_end = params['day_end']
+        self.gui.regul.day_intensity = int(params['day_intensity'])
+
         print(f"Timelapse lauched : {self.picts_left} pictures to be taken.")
         self.run_timelapse()
         

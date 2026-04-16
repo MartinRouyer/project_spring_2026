@@ -115,7 +115,10 @@ class Interface(tk.Tk):
             "contrast": "Contrast (0 to 32):",
             "saturation": "Saturation (0 to 32):",
             "awb_mode": "AWB Mode (0-6):",
-            "name": "Base Filename:"
+            "name": "Base Filename:",
+            "day_start": "Day Start (HH::MM)",
+            "day_end": "Day End (HH::MM)",
+            "day_intensity": "Day Light Intensity (%)"
         }
 
         self.default_values = {
@@ -128,7 +131,11 @@ class Interface(tk.Tk):
             "contrast": "1.0",
             "saturation": "1.0",
             "awb_mode": "5",
-            "name": "test"
+            "name": "test",
+            "day_start": "10:00",
+            "day_end": "11:00",
+            "day_intensity": "80"
+
         }
 
         self.timelapse_entries = {}

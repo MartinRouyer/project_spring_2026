@@ -26,6 +26,9 @@ class Regulation:
         }
 
         self.log_path = None
+        self.day_start = None
+        self.day_end = None
+        self.day_intensity = 80
 
     def _log_data(self, temp, hum):
         if self.log_path is None:
@@ -96,5 +99,15 @@ class Regulation:
                 self.hw.set_fan(True)
                 self.live_data["mist"] = False
                 self.live_data["fan"] = True
+
+            now = datetime.now().strftime("%H:%M")
+
+            if self.day_start and self.day_end:
+                if self.day_start <= now <= self.day_end:
+                    self.hw.set_light(self.day_intensity)
+                    self.live_data["light"] = True
+                else:
+                    self.hw.set_light(0)
+                    self.live_data["light"] = False
 
             time.sleep(5)
