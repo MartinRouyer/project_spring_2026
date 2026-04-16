@@ -56,7 +56,7 @@ class TimelapseManager:
             filename = os.path.join(folder, f"{exp_name}_{self.picts_count:03d}_{timestamp}.jpg")
 
             self.gui.regul.hw.take_pict(filename,params)
-            self._embed_exif(filename)
+            self._embed_exif(filename, params)
 
             self.picts_left -= 1
             self.picts_count += 1
@@ -67,7 +67,7 @@ class TimelapseManager:
             self.active = False
             print("Timelapse end")
 
-    def _embed_exif(self, filename):
+    def _embed_exif(self, filename, params):
         import piexif
         import csv
         import os
@@ -88,7 +88,9 @@ class TimelapseManager:
     
         # Commentaire exif dans UserComment
         comment = ", ".join(f"{k}={v}" for k, v in last_row.items())
-    
+        camera_info = f", iso={params['iso']}, name={params['name']}, shutter={params['shutter']}, brightness={params['brightness']}, contrast={params['contrast']}, saturation={params['saturation']}, awb_mode={params['awb_mode']}"
+        comment += camera_info
+
         exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}}
         exif_dict["Exif"][piexif.ExifIFD.UserComment] = comment.encode()
         exif_bytes = piexif.dump(exif_dict)
