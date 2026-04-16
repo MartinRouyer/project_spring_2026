@@ -5,6 +5,8 @@ class TimelapseManager:
         self.picts_left = 0
         self.picts_count = 0
         self.ms_interval = 0
+        self.next_pict_time = None
+        self.end_time = None
     
     def get_timelapse_params(self):
         timelapse_params = {}
@@ -16,11 +18,14 @@ class TimelapseManager:
 
     def start_timelapse(self):
         import os
+        from datetime import datetime, timedelta
         params = self.get_timelapse_params()
         self.ms_interval = int(params['interval']) * 60000
         self.picts_left = int(params['length']) // int(params['interval'])
         self.picts_count = 0 
         self.active = True
+
+        self.end_time = datetime.now() + timedelta(minutes=int(params['length']))
 
         folder = self.gui.ent_folder.get()
         exp_name = params['exp_name']
@@ -41,7 +46,9 @@ class TimelapseManager:
         self.active = False
         print("User Stop Request")
 
+
     def run_timelapse(self):
+        from datetime import datetime, timedelta
         if self.active and self.picts_left > 0:
             from datetime import datetime
             import os
@@ -63,6 +70,9 @@ class TimelapseManager:
             print(f"{self.picts_count} picture taken. {self.picts_left} picts remaining")
 
             self.gui.after(self.ms_interval, self.run_timelapse)
+
+            self.next_pict_time = datetime.now() + timedelta(milliseconds=self.ms_interval)
+
         else:
             self.active = False
             print("Timelapse end")

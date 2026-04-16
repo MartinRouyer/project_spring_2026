@@ -10,7 +10,7 @@ class Interface(tk.Tk):
         self.regul = regul
         self.timelapse = timelapse_manager
         self.title("Arabidopsis infection monitoring")
-        self.geometry("400x900")
+        self.geometry("400x1000")
 
         # Sensors
 
@@ -68,6 +68,19 @@ class Interface(tk.Tk):
         tk.Button(row_btn, text="Stop Timelapse", command=self.timelapse.stop_timelapse).pack(side="left", padx=5)
 
         tk.Button(row_btn, text="Reset", command=self.reset_timelapse_params).pack(side="left", padx=5)
+
+        # Timelapse status
+        self.lbl_status = tk.Label(self, text="Status: OFF", anchor="w")
+        self.lbl_status.pack(fill="x", padx=5)
+
+        self.lbl_picts = tk.Label(self, text="Photos: 0 / 0", anchor="w")
+        self.lbl_picts.pack(fill="x", padx=5)
+
+        self.lbl_time_left = tk.Label(self, text="Time remaining: --", anchor="w")
+        self.lbl_time_left.pack(fill="x", padx=5)
+
+        self.lbl_next_pict = tk.Label(self, text="Next picture: --", anchor="w")
+        self.lbl_next_pict.pack(fill="x", padx=5)
 
         # Templating
         row_template = tk.Frame(self)
@@ -153,7 +166,7 @@ class Interface(tk.Tk):
         row_folder.pack(fill="x", pady=2)
         tk.Label(row_folder, text="Save folder:", width=20, anchor="w").pack(side="left")
         self.ent_folder = tk.Entry(row_folder, width=20)
-        self.ent_folder.insert(0, "/home/pi/timelapse")
+        self.ent_folder.insert(0, "/home/sevjorry/M2_BIOINFO/PROJET/Test_folder")
         self.ent_folder.pack(side="left", padx=5)
         tk.Button(row_folder, text="Browse", command=self.browse_folder).pack(side="left")
 
@@ -194,6 +207,20 @@ class Interface(tk.Tk):
             color = "#2ECC71" if is_on else "white" 
             self.status_indicators[module].config(bg=color)
 
+        if self.timelapse.active:
+            from datetime import datetime, timedelta
+            total = self.timelapse.picts_count + self.timelapse.picts_left
+            seconds_left = max(0, int((self.timelapse.end_time - datetime.now()).total_seconds()))
+            time_left = str(timedelta(seconds=seconds_left)).split('.')[0]
+            self.lbl_time_left.config(text=f"Time remaining: {time_left}")
+            self.lbl_status.config(text="Status: Running")
+            self.lbl_picts.config(text=f"Photos: {self.timelapse.picts_count} / {total}")
+            self.lbl_time_left.config(text=f"Time remaining: {str(time_left).split('.')[0]}")
+            if self.timelapse.next_pict_time:
+                seconds = max(0, int((self.timelapse.next_pict_time - datetime.now()).total_seconds()))
+                next_pict_str = str(timedelta(seconds=seconds))
+                self.lbl_next_pict.config(text=f"Next picture in: {next_pict_str}")
+
         self.after(1000, self.update_gui)
 
     def browse_folder(self):
@@ -203,6 +230,7 @@ class Interface(tk.Tk):
             self.ent_folder.delete(0, tk.END)
             self.ent_folder.insert(0, folder)
             print(f"Folder selected : {folder}")
+
 
     def setup_template_interface(self):
         tk.Button(self, text="Export", command=self.export_template).pack(side="left")
