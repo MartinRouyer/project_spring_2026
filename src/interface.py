@@ -8,7 +8,7 @@ class Interface(tk.Tk):
         self.regul = regul
         self.timelapse = timelapse_manager
         self.title("Arabidopsis infection monitoring")
-        self.geometry("400x500")
+        self.geometry("400x600")
 
         # Sensors
 
@@ -77,7 +77,10 @@ class Interface(tk.Tk):
             "length": "Timelapse length (min):",
             "interval": "Take pict every (min):", 
             "iso": "ISO for photo:",
-            "name": "Base Filename:"
+            "name": "Base Filename:",
+            "day_start": "Day Start (HH::MM)",
+            "day_end": "Day End (HH::MM)",
+            "day_intensity": "Day Light Intensity (%)"
         }
 
         self.default_values = {
@@ -85,7 +88,11 @@ class Interface(tk.Tk):
             "length": "180",
             "interval": "20",
             "iso": "100",
-            "name": "test"
+            "name": "test",
+            "day_start": "10:00",
+            "day_end": "11:00",
+            "day_intensity": "80"
+
         }
 
         self.timelapse_entries = {}
