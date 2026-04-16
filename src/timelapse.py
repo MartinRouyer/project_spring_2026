@@ -7,6 +7,7 @@ class TimelapseManager:
         self.ms_interval = 0
         self.next_pict_time = None
         self.end_time = None
+        self.start_time = None
     
     def get_timelapse_params(self):
         timelapse_params = {}
@@ -35,9 +36,13 @@ class TimelapseManager:
         hum = self.gui.regul.hw.get_humidity()
         self.gui.regul._log_data(temp, hum)
 
-        self.gui.regul.day_start = params['day_start']
-        self.gui.regul.day_end = params['day_end']
+        self.gui.regul.day_duration = int(params['day_duration'])
+        self.gui.regul.night_duration = int(params['night_duration'])
+        self.gui.regul.start_with = self.gui.start_with_var.get()
         self.gui.regul.day_intensity = int(params['day_intensity'])
+        self.gui.regul.cycle_start = datetime.now()
+
+        self.start_time = datetime.now()
 
         print(f"Timelapse lauched : {self.picts_left} pictures to be taken.")
         self.run_timelapse()

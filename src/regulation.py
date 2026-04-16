@@ -26,8 +26,10 @@ class Regulation:
         }
 
         self.log_path = None
-        self.day_start = None
-        self.day_end = None
+        self.day_duration = None
+        self.night_duration = None
+        self.start_with = "day"
+        self.cycle_start = None
         self.day_intensity = 80
 
     def _log_data(self, temp, hum):
@@ -102,8 +104,18 @@ class Regulation:
 
             now = datetime.now().strftime("%H:%M")
 
-            if self.day_start and self.day_end:
-                if self.day_start <= now <= self.day_end:
+            # Cycle Day/Night
+            if self.day_duration and self.night_duration and self.cycle_start:
+                cycle = self.day_duration + self.night_duration
+                elapsed_min = (datetime.now() - self.cycle_start).total_seconds() / 60
+                pos_in_cycle = elapsed_min % cycle
+    
+                if self.start_with == "day":
+                    is_day = pos_in_cycle < self.day_duration
+                else:
+                    is_day = pos_in_cycle >= self.night_duration
+
+                if is_day:
                     self.hw.set_light(self.day_intensity)
                     self.live_data["light"] = True
                 else:

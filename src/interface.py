@@ -84,6 +84,21 @@ class Interface(tk.Tk):
         self.lbl_next_pict = tk.Label(self, text="Next picture: --", anchor="w")
         self.lbl_next_pict.pack(fill="x", padx=5)
 
+
+        # Cycle day/night status
+        self.canvas_timeline = tk.Canvas(self, height=40, width=380, bg="white", highlightthickness=0)
+        self.canvas_timeline.pack(anchor="w", padx=5, pady=5)
+
+        row_legend = tk.Frame(self)
+        row_legend.pack(anchor="w", padx=5)
+
+        tk.Label(row_legend, width=2, bg="#FFD700").pack(side="left")
+        self.lbl_legend_day = tk.Label(row_legend, text="Day (--%)  ")
+        self.lbl_legend_day.pack(side="left")
+
+        tk.Label(row_legend, width=2, bg="#2C3E50").pack(side="left")
+        tk.Label(row_legend, text="Night (0%)").pack(side="left")
+
         # Templating
         row_template = tk.Frame(self)
         row_template.pack(fill="x", pady=5, anchor="w")
@@ -142,8 +157,8 @@ class Interface(tk.Tk):
             "saturation": "Saturation (0 to 32):",
             "awb_mode": "AWB Mode (0-6):",
             "name": "Base Filename:",
-            "day_start": "Day Start (HH::MM)",
-            "day_end": "Day End (HH::MM)",
+            "day_duration": "Day duration (min):",
+            "night_duration": "Night duration (min):",
             "day_intensity": "Day Light Intensity (%)"
         }
 
@@ -158,8 +173,9 @@ class Interface(tk.Tk):
             "saturation": "1.0",
             "awb_mode": "5",
             "name": "test",
-            "day_start": "10:00",
-            "day_end": "11:00",
+            "day_duration": "480",
+            "night_duration": "480",
+            "start_with": "day",
             "day_intensity": "80"
 
         }
@@ -174,6 +190,13 @@ class Interface(tk.Tk):
             entry.insert(0, self.default_values.get(param_id, ""))
             entry.pack(side="left", padx=5)
             self.timelapse_entries[param_id] = entry
+
+        row_start = tk.Frame(self)
+        row_start.pack(fill="x", pady=2)
+        tk.Label(row_start, text="Start with:", width=20, anchor="w").pack(side="left")
+        self.start_with_var = tk.StringVar(value="day")
+        tk.Radiobutton(row_start, text="Day", variable=self.start_with_var, value="day").pack(side="left")
+        tk.Radiobutton(row_start, text="Night", variable=self.start_with_var, value="night").pack(side="left")
 
         row_folder = tk.Frame(self)
         row_folder.pack(fill="x", pady=2)
@@ -233,6 +256,8 @@ class Interface(tk.Tk):
                 seconds = max(0, int((self.timelapse.next_pict_time - datetime.now()).total_seconds()))
                 next_pict_str = str(timedelta(seconds=seconds))
                 self.lbl_next_pict.config(text=f"Next picture in: {next_pict_str}")
+
+        self._draw_timeline()
 
         if self.timelapse.active:
             self.btn_start.config(state="disabled")
@@ -349,3 +374,43 @@ class Interface(tk.Tk):
             print(f"Test intensity set to {val}%")
         except ValueError:
             print("Invalid value")
+
+    
+    def _draw_timeline(self):
+        from datetime import datetime, timedelta
+        c = self.canvas_timeline
+        c.delete("all")
+        w = 380
+    
+        if not self.timelapse.active or not self.timelapse.end_time:
+            return
+
+        c.create_rectangle(0, 0, w, 40, fill="#2C3E50", outline="")
+
+        now = datetime.now()
+        total_s = (self.timelapse.end_time - self.timelapse.start_time).total_seconds()
+        elapsed_s = (now - self.timelapse.start_time).total_seconds()
+
+        # Draw day/night zones
+        c.create_rectangle(0, 0, w, 40, fill="#2C3E50", outline="")
+
+        if self.timelapse.gui.regul.day_duration and self.timelapse.gui.regul.night_duration:
+            cycle_s = (self.timelapse.gui.regul.day_duration + self.timelapse.gui.regul.night_duration) * 60
+            t = 0
+            is_day = self.timelapse.gui.regul.start_with == "day"
+            while t < total_s:
+                x1 = t / total_s * w
+                duration = self.timelapse.gui.regul.day_duration * 60 if is_day else self.timelapse.gui.regul.night_duration * 60
+                x2 = min((t + duration) / total_s * w, w)
+                if is_day:
+                    intensity = self.timelapse.gui.regul.day_intensity
+                    yellow = f"#{'%02x' % int(255 * intensity/100)}{'%02x' % int(200 * intensity/100)}00"
+                    c.create_rectangle(x1, 0, x2, 40, fill=yellow, outline="")
+                t += duration
+                is_day = not is_day
+
+        # Marker
+        x_now = min(elapsed_s / total_s * w, w)
+        c.create_line(x_now, 0, x_now, 40, fill="red", width=2)
+
+        self.lbl_legend_day.config(text=f"Day ({self.timelapse.gui.regul.day_intensity}%)  ")
