@@ -10,20 +10,31 @@ class Interface(tk.Tk):
         self.regul = regul
         self.timelapse = timelapse_manager
         self.title("Arabidopsis infection monitoring")
-        self.geometry("400x1000")
+        self.geometry("420x800")
+
+        # Scrollable container
+        container = tk.Frame(self)
+        container.pack(fill="both", expand=True)
+        scroll_canvas = tk.Canvas(container)
+        scrollbar = tk.Scrollbar(container, orient="vertical", command=scroll_canvas.yview)
+        scroll_canvas.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
+        scroll_canvas.pack(side="left", fill="both", expand=True)
+        self.inner = tk.Frame(scroll_canvas)
+        scroll_canvas.create_window((0, 0), window=self.inner, anchor="nw")
+        self.inner.bind("<Configure>", lambda e: scroll_canvas.configure(scrollregion=scroll_canvas.bbox("all")))
+        scroll_canvas.bind_all("<Button-4>", lambda e: scroll_canvas.yview_scroll(-1, "units"))
+        scroll_canvas.bind_all("<Button-5>", lambda e: scroll_canvas.yview_scroll(1, "units"))
 
         # Sensors
-
-        self.lbl_temp = tk.Label(self, text="Temp : -- °C -> --")
+        self.lbl_temp = tk.Label(self.inner, text="Temp : -- °C -> --")
         self.lbl_temp.pack(anchor="w")
-
-        self.lbl_hum = tk.Label(self, text="Humidity : -- % -> --")
+        self.lbl_hum = tk.Label(self.inner, text="Humidity : -- % -> --")
         self.lbl_hum.pack(anchor="w")
-
 
         # Settings
 
-        row_t = tk.Frame(self)
+        row_t = tk.Frame(self.inner)
         row_t.pack(fill="x", pady=5)
         tk.Label(row_t, text="Target Temp:").pack(side="left")
         self.ent_temp = tk.Entry(row_t, width=5)
@@ -31,7 +42,7 @@ class Interface(tk.Tk):
         self.ent_temp.pack(side="left", padx=5)
         tk.Button(row_t, text="Set", command=self.update_target_temp).pack(side="left")
 
-        row_h = tk.Frame(self)
+        row_h = tk.Frame(self.inner)
         row_h.pack(fill="x", pady=5)
         tk.Label(row_h, text="Target Hum: ").pack(side="left")
         self.ent_hum = tk.Entry(row_h, width=5)
@@ -45,7 +56,7 @@ class Interface(tk.Tk):
         self.status_indicators = {}
         
         for module in ["heat", "mist", "fan", "light"]:
-            row = tk.Frame(self)
+            row = tk.Frame(self.inner)
             row.pack(fill="x", pady=2)
 
             lbl_name = tk.Label(row, text=f"{module.upper()} :", width=10, anchor="w", font=("Arial", 10))
@@ -60,7 +71,7 @@ class Interface(tk.Tk):
         # Timelapse
         self.setup_timelapse_interface()
 
-        row_btn = tk.Frame(self)
+        row_btn = tk.Frame(self.inner)
         row_btn.pack(fill="x", pady=5, anchor="w")
 
         self.btn_start = tk.Button(row_btn, text="Start Timelapse", command=self.timelapse.start_timelapse)
@@ -72,24 +83,24 @@ class Interface(tk.Tk):
         self.btn_reset.pack(side="left", padx=5)
 
         # Timelapse status
-        self.lbl_status = tk.Label(self, text="Status: OFF", anchor="w")
+        self.lbl_status = tk.Label(self.inner, text="Status: OFF", anchor="w")
         self.lbl_status.pack(fill="x", padx=5)
 
-        self.lbl_picts = tk.Label(self, text="Photos: 0 / 0", anchor="w")
+        self.lbl_picts = tk.Label(self.inner, text="Photos: 0 / 0", anchor="w")
         self.lbl_picts.pack(fill="x", padx=5)
 
-        self.lbl_time_left = tk.Label(self, text="Time remaining: --", anchor="w")
+        self.lbl_time_left = tk.Label(self.inner, text="Time remaining: --", anchor="w")
         self.lbl_time_left.pack(fill="x", padx=5)
 
-        self.lbl_next_pict = tk.Label(self, text="Next picture: --", anchor="w")
+        self.lbl_next_pict = tk.Label(self.inner, text="Next picture: --", anchor="w")
         self.lbl_next_pict.pack(fill="x", padx=5)
 
 
         # Cycle day/night status
-        self.canvas_timeline = tk.Canvas(self, height=40, width=380, bg="white", highlightthickness=0)
+        self.canvas_timeline = tk.Canvas(self.inner, height=40, width=380, bg="white", highlightthickness=0)
         self.canvas_timeline.pack(anchor="w", padx=5, pady=5)
 
-        row_legend = tk.Frame(self)
+        row_legend = tk.Frame(self.inner)
         row_legend.pack(anchor="w", padx=5)
 
         tk.Label(row_legend, width=2, bg="#FFD700").pack(side="left")
@@ -100,7 +111,7 @@ class Interface(tk.Tk):
         tk.Label(row_legend, text="Night (0%)").pack(side="left")
 
         # Templating
-        row_template = tk.Frame(self)
+        row_template = tk.Frame(self.inner)
         row_template.pack(fill="x", pady=5, anchor="w")
 
         tk.Label(row_template, text="Parameters template :").pack(side="left")
@@ -110,14 +121,14 @@ class Interface(tk.Tk):
         # Live preview
         self.preview_on = False
 
-        row_preview = tk.Frame(self)
+        row_preview = tk.Frame(self.inner)
         row_preview.pack(fill="x", pady=5, anchor="w")
 
         self.btn_preview = tk.Button(row_preview, text="Start live preview", command=self.toggle_camera_preview)
         self.btn_preview.pack(side="left", padx=5)
 
         # Test picture
-        row_test_picture = tk.Frame(self)
+        row_test_picture = tk.Frame(self.inner)
         row_test_picture.pack(fill="x", pady=10, anchor="w")
         
         tk.Label(row_test_picture, text="Test picture file name:", width=20, anchor="w").pack(side="left")
@@ -130,7 +141,7 @@ class Interface(tk.Tk):
 
 
         # Test light
-        row_test_light = tk.Frame(self)
+        row_test_light = tk.Frame(self.inner)
         row_test_light.pack(fill="x", pady=10, anchor="w")
 
         tk.Label(row_test_light, text="Test light intensity (%):", width=20, anchor="w").pack(side="left")
@@ -183,7 +194,7 @@ class Interface(tk.Tk):
         self.timelapse_entries = {}
 
         for param_id, param_text in params_timelaps.items():
-            row = tk.Frame(self)
+            row = tk.Frame(self.inner)
             row.pack(fill="x", pady=2)
             tk.Label(row, text=param_text, width=20, anchor="w").pack(side="left")
             entry = tk.Entry(row, width=10)
@@ -191,14 +202,14 @@ class Interface(tk.Tk):
             entry.pack(side="left", padx=5)
             self.timelapse_entries[param_id] = entry
 
-        row_start = tk.Frame(self)
+        row_start = tk.Frame(self.inner)
         row_start.pack(fill="x", pady=2)
         tk.Label(row_start, text="Start with:", width=20, anchor="w").pack(side="left")
         self.start_with_var = tk.StringVar(value="day")
         tk.Radiobutton(row_start, text="Day", variable=self.start_with_var, value="day").pack(side="left")
         tk.Radiobutton(row_start, text="Night", variable=self.start_with_var, value="night").pack(side="left")
 
-        row_folder = tk.Frame(self)
+        row_folder = tk.Frame(self.inner)
         row_folder.pack(fill="x", pady=2)
         tk.Label(row_folder, text="Save folder:", width=20, anchor="w").pack(side="left")
         self.ent_folder = tk.Entry(row_folder, width=20)
@@ -278,8 +289,8 @@ class Interface(tk.Tk):
 
 
     def setup_template_interface(self):
-        tk.Button(self, text="Export", command=self.export_template).pack(side="left")
-        tk.Button(self, text="Import", command=self.import_template).pack(side="left")
+        tk.Button(self.inner, text="Export", command=self.export_template).pack(side="left")
+        tk.Button(self.inner, text="Import", command=self.import_template).pack(side="left")
 
     def export_template(self):
         data = {
