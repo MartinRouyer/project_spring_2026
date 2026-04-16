@@ -63,11 +63,13 @@ class Interface(tk.Tk):
         row_btn = tk.Frame(self)
         row_btn.pack(fill="x", pady=5, anchor="w")
 
-        tk.Button(row_btn, text="Start Timelapse", command=self.timelapse.start_timelapse).pack(side="left", padx=5)
+        self.btn_start = tk.Button(row_btn, text="Start Timelapse", command=self.timelapse.start_timelapse)
+        self.btn_start.pack(side="left", padx=5)
 
         tk.Button(row_btn, text="Stop Timelapse", command=self.timelapse.stop_timelapse).pack(side="left", padx=5)
 
-        tk.Button(row_btn, text="Reset", command=self.reset_timelapse_params).pack(side="left", padx=5)
+        self.btn_reset = tk.Button(row_btn, text="Reset", command=self.reset_timelapse_params)
+        self.btn_reset.pack(side="left", padx=5)
 
         # Timelapse status
         self.lbl_status = tk.Label(self, text="Status: OFF", anchor="w")
@@ -112,6 +114,17 @@ class Interface(tk.Tk):
         tk.Button(row_test_picture, text="Take Test Picture", command=self.take_test_picture).pack(side="left", padx=5)
 
 
+        # Test light
+        row_test_light = tk.Frame(self)
+        row_test_light.pack(fill="x", pady=10, anchor="w")
+
+        tk.Label(row_test_light, text="Test light intensity (%):", width=20, anchor="w").pack(side="left")
+
+        self.test_light_intensity = tk.Entry(row_test_light, width=15)
+        self.test_light_intensity.insert(0, "50")
+        self.test_light_intensity.pack(side="left", padx=5)
+
+        tk.Button(row_test_light, text="Set Light", command=self.test_light).pack(side="left", padx=5)
 
         self.update_gui()
 
@@ -221,6 +234,13 @@ class Interface(tk.Tk):
                 next_pict_str = str(timedelta(seconds=seconds))
                 self.lbl_next_pict.config(text=f"Next picture in: {next_pict_str}")
 
+        if self.timelapse.active:
+            self.btn_start.config(state="disabled")
+        else:
+            self.btn_start.config(state="normal")
+
+        self.btn_reset.config(state="disabled" if self.timelapse.active else "normal")
+
         self.after(1000, self.update_gui)
 
     def browse_folder(self):
@@ -320,3 +340,12 @@ class Interface(tk.Tk):
             
         print(f"Test picture saved: {filename}")
         messagebox.showinfo("Success", f"Photo saved to:\n{filename}")
+
+    def test_light(self):
+        try:
+            val = int(self.test_light_intensity.get())
+            self.regul.hw.set_light(val)
+            self.regul.live_data["light"] = val > 0
+            print(f"Test intensity set to {val}%")
+        except ValueError:
+            print("Invalid value")
