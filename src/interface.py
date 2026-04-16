@@ -10,7 +10,7 @@ class Interface(tk.Tk):
         self.regul = regul
         self.timelapse = timelapse_manager
         self.title("Arabidopsis infection monitoring")
-        self.geometry("400x700")
+        self.geometry("400x900")
 
         # Sensors
 
@@ -80,17 +80,41 @@ class Interface(tk.Tk):
         # Live preview
         self.preview_on = False
 
-        self.btn_preview = tk.Button(self, text="Start live preview", command=self.toggle_camera_preview).pack(side="left", padx=5)
+        row_preview = tk.Frame(self)
+        row_preview.pack(fill="x", pady=5, anchor="w")
+
+        self.btn_preview = tk.Button(row_preview, text="Start live preview", command=self.toggle_camera_preview)
+        self.btn_preview.pack(side="left", padx=5)
+
+        # Test picture
+        row_test_picture = tk.Frame(self)
+        row_test_picture.pack(fill="x", pady=10, anchor="w")
+        
+        tk.Label(row_test_picture, text="Test picture file name:", width=20, anchor="w").pack(side="left")
+        
+        self.test_picture_filename = tk.Entry(row_test_picture, width=15)
+        self.test_picture_filename.insert(0, "test_picture.jpg")
+        self.test_picture_filename.pack(side="left", padx=5)
+
+        tk.Button(row_test_picture, text="Take Test Picture", command=self.take_test_picture).pack(side="left", padx=5)
+
+
 
         self.update_gui()
+
 
 
     def setup_timelapse_interface(self):
         params_timelaps = {
             "exp_name": "Experiment name:",
-            "length": "Timelapse length (min):",
-            "interval": "Take pict every (min):", 
-            "iso": "ISO for photo:",
+            "length": "Total length (min):",
+            "interval": "Interval (min):",
+            "iso": "ISO (100-800):",
+            "shutter": "Shutter speed (ms):",
+            "brightness": "Brightness (-1 to 1):",
+            "contrast": "Contrast (0 to 32):",
+            "saturation": "Saturation (0 to 32):",
+            "awb_mode": "AWB Mode (0-6):",
             "name": "Base Filename:"
         }
 
@@ -99,6 +123,11 @@ class Interface(tk.Tk):
             "length": "180",
             "interval": "20",
             "iso": "100",
+            "shutter": "10.0",
+            "brightness": "0.0",
+            "contrast": "1.0",
+            "saturation": "1.0",
+            "awb_mode": "5",
             "name": "test"
         }
 
@@ -240,3 +269,19 @@ class Interface(tk.Tk):
         else:
             self.regul.hw.live_preview(False)
             self.btn_preview.config(text="Start live preview")
+
+
+    def take_test_picture(self):      
+        import os
+
+        filename = self.test_picture_filename.get()
+
+        params = self.timelapse.get_timelapse_params()
+
+        self.regul.hw.live_preview(False) 
+        self.btn_preview.config(text="Start live preview")
+            
+        self.regul.hw.take_pict(filename, params)
+            
+        print(f"Test picture saved: {filename}")
+        messagebox.showinfo("Success", f"Photo saved to:\n{filename}")

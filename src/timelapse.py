@@ -42,6 +42,9 @@ class TimelapseManager:
             from datetime import datetime
             import os
             
+            self.gui.regul.hw.set_preview(False) 
+            self.gui.btn_preview.config(text="Start live preview")
+            
             params = self.get_timelapse_params()
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             folder = self.gui.ent_folder.get()

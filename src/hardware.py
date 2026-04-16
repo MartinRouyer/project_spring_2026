@@ -24,7 +24,6 @@ class RealHardware(HardwareInterface):
         self.matrix11x7 = Matrix11x7()
 
         self.picam2 = Picamera2()
-        self.picam2.start()
 
         self.PIN_FAN = 1
         self.PIN_MIST = 2
@@ -119,11 +118,52 @@ class RealHardware(HardwareInterface):
         self.set_light(0)
         print(f"Pict saved in : {filename}")
 
+    def take_pict(self, filename: str, params: dict):
+        
+        
+        self.set_light(50)
+        
+        self.picam2.start() # Can be set in the init if we want the camera up during all the timelapse without starting it for each picture
+        time.sleep(2)
+
+        controls = {
+            "AeEnable": False,
+            "AwbEnable": True, # If True use AwbMode if False use manual 
+        }
+
+        # Expo
+        shutter_ms = float(params.get('shutter', 10))
+        controls["ExposureTime"] = int(shutter_ms * 1000)
+        
+        # Iso
+        iso_val = float(params.get('iso', 100))
+        controls["AnalogueGain"] = iso_val / 100.0
+
+        # Other settings
+        controls["Brightness"] = float(params.get('brightness', 0.0))
+        controls["Contrast"] = float(params.get('contrast', 1.0))
+        controls["Saturation"] = float(params.get('saturation', 1.0))
+        
+        # White balance
+        controls["AwbMode"] = int(params.get('awb_mode', 5))
+
+
+        self.picam2.set_controls(controls)
+
+        self.picam2.capture_file(filename)
+        
+        self.picam2.stop()
+        self.set_light(0)
+
+        print(f"Picture saved in : {filename}")
+
     def live_preview(self, state: bool):
         if state:
+            self.picam2.start()
             self.picam2.start_preview(Preview.QTGL)
         else:
             self.picam2.stop_preview()
+            self.picam2.stop()
 
 
 class MockHardware(HardwareInterface):
@@ -177,7 +217,7 @@ class MockHardware(HardwareInterface):
             self.heat_state = state
             print(f"Heat : {'ON' if state else 'OFF'}")
 
-    def take_pict(self, filename: str):
+    def take_pict(self, filename: str, params: dict):
         import os
         from PIL import Image, ImageDraw
     
@@ -186,7 +226,7 @@ class MockHardware(HardwareInterface):
         draw = ImageDraw.Draw(img)
         draw.text((10, 10), filename, fill=(255, 255, 255))
         img.save(filename)
-        print(f"[Mocking] Picture saved -> {filename}")
+        print(f"Picture saved -> {filename}")
 
     def live_preview(self, state: bool):
         print(f"Live Preview : {'ON' if state else 'OFF'}")
