@@ -8,6 +8,7 @@ class TimelapseManager:
         self.next_pict_time = None
         self.end_time = None
         self.start_time = None
+        self.pict_timestamps = []
     
     def get_timelapse_params(self):
         timelapse_params = {}
@@ -69,6 +70,7 @@ class TimelapseManager:
 
             self.gui.regul.hw.take_pict(filename,params)
             self._embed_exif(filename, params)
+            self.pict_timestamps.append(datetime.now())
 
             self.picts_left -= 1
             self.picts_count += 1

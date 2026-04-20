@@ -424,4 +424,12 @@ class Interface(tk.Tk):
         x_now = min(elapsed_s / total_s * w, w)
         c.create_line(x_now, 0, x_now, 40, fill="red", width=2)
 
+        total_photos = self.timelapse.picts_count + self.timelapse.picts_left
+        for i in range(total_photos):
+            elapsed = i * self.timelapse.ms_interval / 1000
+            x = min(elapsed / total_s * w, w)
+            color = "#2ECC71" if i < self.timelapse.picts_count else "white"
+            c.create_line(x, 0, x, 40, fill=color, width=2)
+
+
         self.lbl_legend_day.config(text=f"Day ({self.timelapse.gui.regul.day_intensity}%)  ")
