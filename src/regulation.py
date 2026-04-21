@@ -39,7 +39,6 @@ class Regulation:
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "temp": temp,
             "hum": hum,
-            # ajouter métrique ici
         }
         file_exists = os.path.isfile(self.log_path)
         with open(self.log_path, 'a', newline='') as f:
@@ -71,6 +70,8 @@ class Regulation:
         while self.running:
 
             print(' -- new control loop -- ')
+            
+            temp,hum = self.hw.get_temp_hum()
             temp = self.hw.get_temperature()
             hum = self.hw.get_humidity()
 

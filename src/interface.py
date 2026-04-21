@@ -3,6 +3,10 @@ from tkinter import ttk
 import json
 from tkinter import filedialog, messagebox
 
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+
 class Interface(tk.Tk):
     def __init__(self, regul, timelapse_manager):
         super().__init__()
@@ -11,6 +15,10 @@ class Interface(tk.Tk):
         self.timelapse = timelapse_manager
         self.title("Arabidopsis infection monitoring")
         self.geometry("420x800")
+
+        self.history_limit = 50
+        self.temp_history = []
+        self.hum_history = []
 
         # Scrollable container
         container = tk.Frame(self)
@@ -31,6 +39,8 @@ class Interface(tk.Tk):
         self.lbl_temp.pack(anchor="w")
         self.lbl_hum = tk.Label(self.inner, text="Humidity : -- % -> --")
         self.lbl_hum.pack(anchor="w")
+
+        self.setup_plots()
 
         # Settings
 
@@ -154,6 +164,16 @@ class Interface(tk.Tk):
 
         self.update_gui()
 
+    def setup_plots(self):
+        self.fig = Figure(figsize=(3, 3), dpi=100)
+        
+        self.ax_t = self.fig.add_subplot(211) #2 ligne 1 colonne 1 ère position
+        self.ax_h = self.fig.add_subplot(212) #2 ligne 1 colonne 2 eme position
+        
+        self.fig.tight_layout(pad=1.0)
+
+        self.canvas_plot = FigureCanvasTkAgg(self.fig, master=self.inner)
+        self.canvas_plot.get_tk_widget().pack(fill="both", expand=True, padx=2, pady=2)
 
 
     def setup_timelapse_interface(self):
@@ -246,6 +266,18 @@ class Interface(tk.Tk):
         t = data["temp"]
         h = data["hum"]
         
+        if t is not None:
+            self.temp_history.append(t)
+            if len(self.temp_history) > self.history_limit:
+                self.temp_history.pop(0)
+        
+        if h is not None:
+            self.hum_history.append(h)
+            if len(self.hum_history) > self.history_limit:
+                self.hum_history.pop(0)
+
+        self.draw_plots()
+
         self.lbl_temp.config(text=f"Temperature: {t:.1f} °C -> {self.regul.target_temp}" if t is not None else "Temp: ERR")
         self.lbl_hum.config(text=f"Humidity: {h:.1f} % -> {self.regul.target_hum}" if h is not None else "Hum: ERR")
 
@@ -433,3 +465,27 @@ class Interface(tk.Tk):
 
 
         self.lbl_legend_day.config(text=f"Day ({self.timelapse.gui.regul.day_intensity}%)  ")
+
+    def draw_plots(self):
+        # Temperature
+        self.ax_t.clear()
+        self.ax_t.grid(True, linestyle='--', alpha=0.7)
+        if self.temp_history:
+            self.ax_t.plot(self.temp_history, color='red', linewidth=2)
+        self.ax_t.set_xticks([])
+        
+        target_t = self.regul.target_temp
+        self.ax_t.axhline(target_t, color='green', linestyle='-', label='Cible')
+
+        # Humidity
+        self.ax_h.clear()
+        self.ax_h.set_title(" ↑ Temperature (%) ↑ | ↓ Humidity (%) ↓ ")
+        self.ax_h.grid(True, linestyle='--', alpha=0.7)
+        if self.hum_history:
+            self.ax_h.plot(self.hum_history, color='blue', linewidth=2)
+        self.ax_h.set_xticks([])
+        
+        target_h = self.regul.target_hum
+        self.ax_h.axhline(target_h, color='green', linestyle='-', label='Cible')
+
+        self.canvas_plot.draw()
