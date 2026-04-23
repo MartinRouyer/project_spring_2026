@@ -25,7 +25,7 @@ class TimelapseManager:
         self.ms_interval = int(params['interval']) * 60000
         self.picts_left = int(params['length']) // int(params['interval'])
         self.picts_count = 0 
-        self.active = True
+        #self.active = True
 
         self.end_time = datetime.now() + timedelta(minutes=int(params['length']))
 
@@ -33,8 +33,15 @@ class TimelapseManager:
         exp_name = params['exp_name']
         self.gui.regul.log_path = os.path.join(folder, f"{exp_name}_data.csv")
 
-        temp = self.gui.regul.hw.get_temperature()
-        hum = self.gui.regul.hw.get_humidity()
+        temp,hum = self.gui.regul.hw.get_temp_hum()
+
+        if temp is None or hum is None:
+            temp = self.gui.regul.live_data["temp"]
+            hum = self.gui.regul.live_data["hum"]
+        else:
+            self.gui.regul.live_data["temp"] = temp
+            self.gui.regul.live_data["hum"] = hum
+        
         self.gui.regul._log_data(temp, hum)
 
         self.gui.regul.day_duration = int(params['day_duration'])
@@ -45,6 +52,7 @@ class TimelapseManager:
 
         self.start_time = datetime.now()
 
+        self.active = True
         print(f"Timelapse lauched : {self.picts_left} pictures to be taken.")
         self.run_timelapse()
         
@@ -59,7 +67,7 @@ class TimelapseManager:
             from datetime import datetime
             import os
             
-            self.gui.regul.hw.live_preview(False) 
+            #self.gui.regul.hw.live_preview(False) 
             self.gui.btn_preview.config(text="Start live preview")
             
             params = self.get_timelapse_params()

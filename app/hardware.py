@@ -13,33 +13,34 @@ class HardwareInterface:
 
 
 
-class RealHardware(HardwareInterface):
+class RealHardware():
     def __init__(self):
         import board
         import adafruit_dht
         from gpiozero import PWMOutputDevice
         from gpiozero import OutputDevice
         
-        self.dht_dev = adafruit_dht.DHT22(board.D4) # , use_pulseio=False
+        self.dht_dev = adafruit_dht.DHT11(board.D4, use_pulseio=False)
 
-        self.picam2 = Picamera2()
+        #self.picam2 = Picamera2()
 
         #self.PIN_FAN = 1
-        self.PIN_MIST = 2
-        self.PIN_HEAT = 3 # GPIO pin number
+        self.PIN_MIST = 17
+        self.PIN_HEAT = 27
+        self.PIN_LIGHT = 23
 
-        self.heat = PWMOutputDevice(self.PIN_HEAT, frequency=100, initial_value=0)
+        self.heat = OutputDevice(self.PIN_HEAT, initial_value=False)
         # self.heat.value = 0.5
 
-        self.mist = OutputDevice(2, initial_value=False)
+        self.mist = OutputDevice(self.PIN_MIST, initial_value=False)
         # mist.on()
         # mist.off()
+        self.light = OutputDevice(self.PIN_LIGHT, initial_value=False)
 
-
-        self.heat_state = 0
+        self.heat_state = False
         # self.fan_state = 0
         self.mist_state = False
-        self.light_state = 0
+        self.light_state = False
 
     def get_temp_hum(self):
         try:
@@ -57,7 +58,7 @@ class RealHardware(HardwareInterface):
             self.dht_dev.exit()
             raise error
     
-    
+    '''
     def get_temperature(self):
         try:
             return self.dht_dev.temperature
@@ -80,7 +81,8 @@ class RealHardware(HardwareInterface):
         except Exception as error:
             self.dht_dev.exit()
             raise error
-        
+    '''
+    '''
     def set_fan(self, state: bool):
         if state != self.fan_state:
             self.fan_state = state
@@ -91,23 +93,29 @@ class RealHardware(HardwareInterface):
             else:
                 self.GPIO.output(self.PIN_FAN, self.GPIO.LOW)
                 print("Fan OFF")
+    '''
 
-    def set_light(self, percent: int):
-        if percent != self.light_state:
-            self.light_state = percent
+    def set_light(self, state: bool):
+        if state != self.light_state:
+            self.light_state = state
 
-            matrix11x7.fill(percent / 100, 0, 0, 11, 7)
-            matrix11x7.show()
+            if state:
+                self.light.on()
+                print("Light ON")
+            else:
+                self.light.off()
+                print("Light OFF")        
+        
 
     def set_mist(self, state: bool):
         if state != self.mist_state:
             self.mist_state = state
 
             if state:
-                self.GPIO.output(self.PIN_MIST, self.GPIO.HIGH)
+                self.mist.on()
                 print("Mist ON")
             else:
-                self.GPIO.output(self.PIN_MIST, self.GPIO.LOW)
+                self.mist.off()
                 print("Mist OFF")
 
     def set_heat(self, state: bool):
@@ -115,10 +123,10 @@ class RealHardware(HardwareInterface):
             self.heat_state = state
 
             if state:
-                self.GPIO.output(self.PIN_HEAT, self.GPIO.HIGH)
+                self.heat.on()
                 print("Heat ON")
             else:
-                self.GPIO.output(self.PIN_HEAT, self.GPIO.LOW)
+                self.heat.off()
                 print("Heat OFF")
 
     '''
@@ -136,13 +144,45 @@ class RealHardware(HardwareInterface):
         print(filename + " saved")
         self.set_light(0)
     '''
-    def take_pict(self, filename: str, params: dict):
-        # ? Params
-        self.set_light(50)
-        self.picam2.capture_file(filename)
-        self.set_light(0)
-        print(f"Pict saved in : {filename}")
 
+
+
+    # Mock take pict because camera not mounted in the hardware
+    def take_pict(self, filename: str, params: dict):
+        import os
+        from PIL import Image, ImageDraw
+    
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        img = Image.new("RGB", (640, 480), color=(34, 139, 34))
+        draw = ImageDraw.Draw(img)
+        draw.text((10, 10), filename, fill=(255, 255, 255))
+        img.save(filename)
+        print(f"Picture saved -> {filename}")
+
+    '''
+    def take_pict(self, filename: str, params: dict):
+        import os
+        import subprocess
+
+        self.set_light(50) #a definir 
+
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+
+        cmd = [
+            "rpicam-still", "-o", filename, "--nopreview",
+            "--gain",       str(float(params.get('iso', 100)) / 100.0),
+            "--shutter",    str(int(float(params.get('shutter', 10)) * 1000)),
+            "--brightness", str(params.get('brightness', '0.0')),
+            "--contrast",   str(params.get('contrast', '1.0')),
+            "--saturation", str(params.get('saturation', '1.0')),
+            "--awb", params.get('awb_mode', 'auto')
+        ]
+
+        print(f"Running: {cmd}")
+        subprocess.run(cmd)
+        print(f"Picture saved -> {filename}")
+    '''
+    '''
     def take_pict(self, filename: str, params: dict):
         
         
@@ -181,15 +221,42 @@ class RealHardware(HardwareInterface):
         self.set_light(0)
 
         print(f"Picture saved in : {filename}")
-
-    def live_preview(self, state: bool):
+    '''
+    '''
+    def live_preview(self, state: bool, params: dict = {}):
+        import subprocess
         if state:
-            self.picam2.start()
-            self.picam2.start_preview(Preview.QTGL)
+            AWB_MAP = {
+                "0": "auto", "1": "incandescent", "2": "tungsten",
+                "3": "fluorescent", "4": "indoor", "5": "daylight", "6": "cloudy"
+            }
+            cmd = [
+                "rpicam-hello", "-t", "0",
+                "--gain",       str(float(params.get('iso', 100)) / 100.0),
+                "--shutter",    str(int(float(params.get('shutter', 10)) * 1000)),
+                "--brightness", str(params.get('brightness', '0.0')),
+                "--contrast",   str(params.get('contrast', '1.0')),
+                "--saturation", str(params.get('saturation', '1.0')),
+                "--awb",        AWB_MAP.get(str(params.get('awb_mode', '0')), 'auto'),
+            ]
+            self._preview_proc = subprocess.Popen(cmd)
+            print("Live Preview : ON")
         else:
-            self.picam2.stop_preview()
-            self.picam2.stop()
+            if hasattr(self, '_preview_proc') and self._preview_proc:
+                self._preview_proc.terminate()
+                self._preview_proc = None
+            print("Live Preview : OFF")
+    '''
+    def shutdown(self):
 
+        self.mist.off()
+        self.light.off()
+        self.heat.off()
+
+
+        self.mist.close()
+        self.light.close()
+        self.heat.close()
 
 class MockHardware(HardwareInterface):
     def __init__(self):
@@ -275,5 +342,9 @@ class MockHardware(HardwareInterface):
         img.save(filename)
         print(f"Picture saved -> {filename}")
 
-    def live_preview(self, state: bool):
+    def live_preview(self, state: bool, params: dict = {}):
+        print(params)
         print(f"Live Preview : {'ON' if state else 'OFF'}")
+        
+    def shutdown(self):
+        print('Shutdown app')

@@ -12,7 +12,8 @@ class Regulation:
         # Targets values
         self.target_temp = 22.0
         self.target_hum = 70.0
-        self.margin = 1
+        self.margin_temp = 2
+        self.margin_hum = 10
         
         # Shared data with the interface
         self.live_data = {
@@ -61,8 +62,10 @@ class Regulation:
         self.live_data["status"] = "Off"
         self.hw.set_heat(False)
         self.hw.set_mist(False)
-        self.hw.set_fan(False)
-        self.hw.set_light(0)
+        #self.hw.set_fan(False)
+        self.hw.set_light(False)
+        self.hw.shutdown()
+
 
     def _control_loop(self):
         self.live_data["status"] = "Running"
@@ -72,34 +75,32 @@ class Regulation:
             print(' -- new control loop -- ')
             
             temp,hum = self.hw.get_temp_hum()
-            temp = self.hw.get_temperature()
-            hum = self.hw.get_humidity()
 
-            self.live_data["temp"] = temp
-            self.live_data["hum"] = hum
-            self._log_data(temp, hum)
-                
+            if temp is None or hum is None:
+                temp = self.live_data["temp"]
+                hum = self.live_data["hum"]
+            else:
+                self.live_data["temp"] = temp
+                self.live_data["hum"] = hum
+                self._log_data(temp, hum)
+
+
             # Temp
-            if temp < (self.target_temp - self.margin):
+            if temp < (self.target_temp - self.margin_temp):
                 self.hw.set_heat(True)
-                self.hw.set_fan(False)
                 self.live_data["heat"] = True
-                self.live_data["fan"] = False
-            elif temp > (self.target_temp + self.margin):
+        
+            elif temp > (self.target_temp):
                 self.hw.set_heat(False)
-                self.hw.set_fan(True)
                 self.live_data["heat"] = False
-                self.live_data["fan"] = True
 
             # Humidity
-            if hum < (self.target_hum - 5.0):
+            if hum < (self.target_hum - self.margin_hum):
                 self.hw.set_mist(True)
-                self.hw.set_fan(False)
                 self.live_data["mist"] = True
-                self.live_data["fan"] = False
-            elif hum > self.target_hum:
+
+            elif hum > (self.target_hum - (self.margin_hum/2)):
                 self.hw.set_mist(False)
-                self.hw.set_fan(True)
                 self.live_data["mist"] = False
                 self.live_data["fan"] = True
 
@@ -117,10 +118,10 @@ class Regulation:
                     is_day = pos_in_cycle >= self.night_duration
 
                 if is_day:
-                    self.hw.set_light(self.day_intensity)
+                    self.hw.set_light(True)#self.day_intensity
                     self.live_data["light"] = True
                 else:
-                    self.hw.set_light(0)
+                    self.hw.set_light(False)
                     self.live_data["light"] = False
 
             time.sleep(5)
