@@ -5,8 +5,8 @@
 
 sudo apt-get install python3-tk
 sudo apt-get install libcap-dev
-sudo apt-get install libgpiod2
 
-then 
+# Launch app
 
-pip install -r fiat_lux_camera_code/requirements_minimal.txt
+uv run start-app
+

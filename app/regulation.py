@@ -10,8 +10,8 @@ class Regulation:
         self.running = False
         
         # Targets values
-        self.target_temp = 22.0
-        self.target_hum = 70.0
+        self.target_temp = 28
+        self.target_hum = 100
         self.margin_temp = 2
         self.margin_hum = 10
         

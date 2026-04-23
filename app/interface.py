@@ -112,7 +112,7 @@ class Interface(tk.Tk):
         row_folder.pack(fill="x", pady=2)
         tk.Label(row_folder, text="Save folder:", width=20, anchor="w").pack(side="left")
         self.ent_folder = tk.Entry(row_folder, width=15)
-        self.ent_folder.insert(0, "/home/sevjorry/M2_BIOINFO/PROJET/Test_folder")
+        #self.ent_folder.insert(0) # No default folder
         self.ent_folder.pack(side="left", padx=5)
         tk.Button(row_folder, text="Browse", command=self.browse_folder).pack(side="left")
 
@@ -327,7 +327,7 @@ class Interface(tk.Tk):
         frm_modules.pack(fill="x", padx=8, pady=5)
 
         self.status_indicators = {}
-        for module in ["heat", "mist", "fan", "light"]:
+        for module in ["heat", "mist", "light"]:
             row = tk.Frame(frm_modules)
             row.pack(fill="x", pady=2)
             tk.Label(row, text=f"{module.upper()} :", width=10, anchor="w", font=("Arial", 10)).pack(side="left")
@@ -337,7 +337,7 @@ class Interface(tk.Tk):
 
     def _start_timelapse(self):
         self.timelapse.start_timelapse()
-        self.notebook.add(self.tab_timelapse, text=f"Timelapse — {self.timelapse_entries['exp_name'].get()}")
+        self.notebook.add(self.tab_timelapse, text=f"Timelapse -- {self.timelapse_entries['exp_name'].get()}")
         self.notebook.select(self.tab_timelapse)
 
     def _stop_timelapse(self):
@@ -368,7 +368,7 @@ class Interface(tk.Tk):
         self.lbl_temp.config(text=f"Temperature: {t:.1f} °C -> {self.regul.target_temp}" if t is not None else "Temp: ERR")
         self.lbl_hum.config(text=f"Humidity: {h:.1f} % -> {self.regul.target_hum}" if h is not None else "Hum: ERR")
 
-        for module in ["heat", "mist", "fan", "light"]:
+        for module in ["heat", "mist", "light"]:
             is_on = data.get(module, False)
             self.status_indicators[module].config(bg="#2ECC71" if is_on else "white")
 
@@ -564,4 +564,3 @@ class Interface(tk.Tk):
         self.regul.stop()
     
         self.destroy()
-        print("Application fermée et hardware sécurisé.")
