@@ -1,0 +1,25 @@
+[project]
+name = "project-spring-2026"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "adafruit-blinka>=9.1.0",
+    "adafruit-circuitpython-dht>=4.0.11",
+    "gpiozero>=2.0.1",
+    "matplotlib>=3.10.8",
+    "piexif>=1.1.3",
+    "pillow>=12.2.0",
+]
+
+[project.scripts]
+# 'uv run start-app'
+start-app = "app.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]

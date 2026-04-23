@@ -1,5 +1,0 @@
-Pillow
-picamera2
-matrix11x7
-adafruit-blinka
-adafruit-circuitpython-dht

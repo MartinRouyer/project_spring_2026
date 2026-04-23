@@ -1,4 +1,2 @@
-venv/
-project_env/
 test/
-src/__pycache__/
+.venv/
