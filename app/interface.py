@@ -14,10 +14,8 @@ class Interface(tk.Tk):
         self.regul = regul
         self.timelapse = timelapse_manager
         self.title("Arabidopsis infection monitoring")
-        self.geometry(f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}+0+0")
+        self.attributes("-zoomed", True)
         self.resizable(True, True)
-
-        self.geometry(f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}+0+0")
 
         # notebook = tabs 
         self.notebook = ttk.Notebook(self)
