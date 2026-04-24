@@ -46,7 +46,7 @@ uv sync
 ### 3. Run
 
 ```bash
-uv run start-app
+uv run plant-timelapse
 ```
 
 ### Simulation mode
