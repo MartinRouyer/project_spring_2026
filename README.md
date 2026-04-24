@@ -1,4 +1,4 @@
-# project_spring_2026
+# Plant Timelapse
 
 Control software for automated time-lapse imaging of *Arabidopsis thaliana* leaves infected with *Dickeya dadantii*, with real-time monitoring and regulation of temperature, humidity and lighting in a controlled atmosphere.
 
