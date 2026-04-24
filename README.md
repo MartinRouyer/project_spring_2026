@@ -11,7 +11,7 @@ The setup is built around a Raspberry Pi 5. The following components are connect
 | Category | Component | Model | GPIO pin |
 |---|---|---|---|
 | SBC | Single Board Computer | Raspberry Pi 5 4GB | -- |
-| Camera | Camera module | -- | CSI |
+| Camera | Camera module | Raspberry Pi Camera Module v2.1 | CSI |
 | Sensing | Temp. & Humidity sensor | DHT22 module | 4 |
 | Lighting | LED strip | CCT 24V IP65 60LED/m, driven via MOSFET module | 23 |
 | Actuators | Ultrasonic fogger | 5V 20mm USB atomizer module | 17 |
@@ -207,4 +207,4 @@ Séverin JORRY & Martin ROUYER -- Master 2 Bioinformatics, Lyon 1
 
 **Project supervisor:** Adel Amine GANI -- MAP Laboratory UMR5240, Lyon 1 / INSA Lyon / CNRS
 
-**Acknowledgements:** Matthieu -- for his help with the electrical assembly
+**Acknowledgements:** Matthieu JACQUEMIN -- for his help with the electrical assembly
