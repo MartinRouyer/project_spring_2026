@@ -14,8 +14,8 @@ dependencies = [
 ]
 
 [project.scripts]
-# 'uv run start-app'
-start-app = "app.main:main"
+# 'uv run plant-timelapse'
+plant-timelapse = "app.main:main"
 
 [build-system]
 requires = ["hatchling"]

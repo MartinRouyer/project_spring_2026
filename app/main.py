@@ -5,7 +5,7 @@ from .interface import Interface
 from .timelapse import TimelapseManager
 
 def main():
-    mode_simu = False
+    mode_simu = True
     if mode_simu:
         hardware = MockHardware()
     else:
