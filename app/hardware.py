@@ -15,34 +15,42 @@ class HardwareInterface:
 
 class RealHardware():
     def __init__(self):
+        """
+        Init all modules connected to the Pi : 
+        - MOSFET actuators for all electrical component
+        - temparature/humidity sensor
+        """
         import board
         import adafruit_dht
         from gpiozero import PWMOutputDevice
         from gpiozero import OutputDevice
+        import os
+        import subprocess
         
         self.dht_dev = adafruit_dht.DHT11(board.D4, use_pulseio=False)
 
         #self.picam2 = Picamera2()
-
-        #self.PIN_FAN = 1
+        
         self.PIN_MIST = 17
         self.PIN_HEAT = 27
         self.PIN_LIGHT = 23
+        #self.PIN_FAN = 1
 
         self.heat = OutputDevice(self.PIN_HEAT, initial_value=False)
-        # self.heat.value = 0.5
-
         self.mist = OutputDevice(self.PIN_MIST, initial_value=False)
-        # mist.on()
-        # mist.off()
         self.light = OutputDevice(self.PIN_LIGHT, initial_value=False)
 
+
         self.heat_state = False
-        # self.fan_state = 0
         self.mist_state = False
         self.light_state = False
+        # self.fan_state = False
 
     def get_temp_hum(self):
+        """
+        Get temperature and humidity data from the sensor.
+        Sensor can return a lot of RuntineError.
+        """
         try:
             temp = self.dht_dev.temperature
             hum = self.dht_dev.humidity
@@ -58,42 +66,8 @@ class RealHardware():
             self.dht_dev.exit()
             raise error
     
-    '''
-    def get_temperature(self):
-        try:
-            return self.dht_dev.temperature
-            
-        except RuntimeError as error:
-            print(f"Erreur de lecture : {error.args[0]}")
-
-        except Exception as error:
-            self.dht_dev.exit()
-            raise error
-
-        
-    def get_humidity(self):
-        try:
-            return self.dht_dev.temperature
-            
-        except RuntimeError as error:
-            print(f"Erreur de lecture : {error.args[0]}")
-
-        except Exception as error:
-            self.dht_dev.exit()
-            raise error
-    '''
-    '''
-    def set_fan(self, state: bool):
-        if state != self.fan_state:
-            self.fan_state = state
-
-            if state:
-                self.GPIO.output(self.PIN_FAN, self.GPIO.HIGH)
-                print("Fan ON")
-            else:
-                self.GPIO.output(self.PIN_FAN, self.GPIO.LOW)
-                print("Fan OFF")
-    '''
+    
+    # Functions to pilot MOSFET
 
     def set_light(self, state: bool):
         if state != self.light_state:
@@ -130,27 +104,25 @@ class RealHardware():
                 print("Heat OFF")
 
     '''
-    def take_pict(self, filename: str, params: dict):
+    # For futur use, if fan is mounted on the hardware
+    def set_fan(self, state: bool):
+        if state != self.fan_state:
+            self.fan_state = state
 
-        # A definir
-        self.set_light(50)
-        speed = 1000000
-        iso = 100
-
-        cmd = ["libcamera-still", "-o", filename, "--shutter", str(speed), "--gain", str(iso), "--immediate", "-n", "--denoise",
-            "cdn_hq"]
-        print(f"Running :{cmd}")
-        subprocess.call(cmd)
-        print(filename + " saved")
-        self.set_light(0)
+            if state:
+                self.fan.on()
+                print("Fan ON")
+            else:
+                self.fan.off()
+                print("Fan OFF")
     '''
 
-
-
-    # Mock take pict because camera not mounted in the hardware
+    # Mock take pict because camera not mounted in the hardware for now
     def take_pict(self, filename: str, params: dict):
         import os
         from PIL import Image, ImageDraw
+
+        self.set_light(True)
     
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         img = Image.new("RGB", (640, 480), color=(34, 139, 34))
@@ -158,11 +130,12 @@ class RealHardware():
         draw.text((10, 10), filename, fill=(255, 255, 255))
         img.save(filename)
         print(f"Picture saved -> {filename}")
+    
+
 
     '''
+    # For future use, when the camera is connected to the hardware
     def take_pict(self, filename: str, params: dict):
-        import os
-        import subprocess
 
         self.set_light(50) #a definir 
 
@@ -182,47 +155,14 @@ class RealHardware():
         subprocess.run(cmd)
         print(f"Picture saved -> {filename}")
     '''
+    
+    # Mock live preview because camera not mounted in the hardware for now
+    def live_preview(self, state: bool, params: dict = {}):
+        print(params)
+        print(f"Live Preview : {'ON' if state else 'OFF'}")
+
     '''
-    def take_pict(self, filename: str, params: dict):
-        
-        
-        self.set_light(50)
-        
-        self.picam2.start() # Can be set in the init if we want the camera up during all the timelapse without starting it for each picture
-        time.sleep(2)
-
-        controls = {
-            "AeEnable": False,
-            "AwbEnable": True, # If True use AwbMode if False use manual 
-        }
-
-        # Expo
-        shutter_ms = float(params.get('shutter', 10))
-        controls["ExposureTime"] = int(shutter_ms * 1000)
-        
-        # Iso
-        iso_val = float(params.get('iso', 100))
-        controls["AnalogueGain"] = iso_val / 100.0
-
-        # Other settings
-        controls["Brightness"] = float(params.get('brightness', 0.0))
-        controls["Contrast"] = float(params.get('contrast', 1.0))
-        controls["Saturation"] = float(params.get('saturation', 1.0))
-        
-        # White balance
-        controls["AwbMode"] = int(params.get('awb_mode', 5))
-
-
-        self.picam2.set_controls(controls)
-
-        self.picam2.capture_file(filename)
-        
-        self.picam2.stop()
-        self.set_light(0)
-
-        print(f"Picture saved in : {filename}")
-    '''
-    '''
+    # For future use, when the camera is connected to the hardware
     def live_preview(self, state: bool, params: dict = {}):
         import subprocess
         if state:
@@ -247,18 +187,30 @@ class RealHardware():
                 self._preview_proc = None
             print("Live Preview : OFF")
     '''
+
     def shutdown(self):
+        """
+        Stop and shutdown (free the pin) all electrical modules
+        """
 
         self.mist.off()
         self.light.off()
         self.heat.off()
+        #self.fan.off()
 
 
         self.mist.close()
         self.light.close()
         self.heat.close()
+        #self.fan.close()
+
+        self.dht_dev.exit()
 
 class MockHardware(HardwareInterface):
+    """
+    Class used to develop interface in absenc of mounted hardware.
+    board adafruit_dht and gpiozero need areal Pi device to be loaded
+    """
     def __init__(self):
         self.temp = 20.0
         self.hum = 50.0

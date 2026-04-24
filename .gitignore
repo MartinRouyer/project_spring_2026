@@ -1,3 +1,4 @@
 test/
 .venv/
 app/__pycache__
+data/*

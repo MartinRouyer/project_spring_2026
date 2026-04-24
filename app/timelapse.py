@@ -11,6 +11,9 @@ class TimelapseManager:
         self.pict_timestamps = []
     
     def get_timelapse_params(self):
+        """
+        Retrieve pictures parameters set in the interface
+        """
         timelapse_params = {}
         
         for param_id, entry in self.gui.timelapse_entries.items():
@@ -19,13 +22,16 @@ class TimelapseManager:
         return timelapse_params
 
     def start_timelapse(self):
+        """
+        Init data file and start timelapse
+        """
         import os
         from datetime import datetime, timedelta
+
         params = self.get_timelapse_params()
         self.ms_interval = int(params['interval']) * 60000
         self.picts_left = int(params['length']) // int(params['interval'])
         self.picts_count = 0 
-        #self.active = True
 
         self.end_time = datetime.now() + timedelta(minutes=int(params['length']))
 
@@ -62,12 +68,17 @@ class TimelapseManager:
 
 
     def run_timelapse(self):
+        """
+        A recursive function that takes photos with parameters defined by the interface,
+        until there is no picture left to take or that the timelapse is stopped.
+        """
         from datetime import datetime, timedelta
         if self.active and self.picts_left > 0:
             from datetime import datetime
             import os
             
-            #self.gui.regul.hw.live_preview(False) 
+            # Stop live preview for unique image flux
+            self.gui.regul.hw.live_preview(False) 
             self.gui.btn_preview.config(text="Start live preview")
             
             params = self.get_timelapse_params()
@@ -84,6 +95,7 @@ class TimelapseManager:
             self.picts_count += 1
             print(f"{self.picts_count} picture taken. {self.picts_left} picts remaining")
 
+            # Asynchrone call after set delay
             self.gui.after(self.ms_interval, self.run_timelapse)
 
             self.next_pict_time = datetime.now() + timedelta(milliseconds=self.ms_interval)
@@ -93,6 +105,9 @@ class TimelapseManager:
             print("Timelapse end")
 
     def _embed_exif(self, filename, params):
+        """
+        Put metadata of the experiment in EXIF format of the picture
+        """
         import piexif
         import csv
         import os
@@ -111,7 +126,7 @@ class TimelapseManager:
     
         last_row = rows[-1]
     
-        # Commentaire exif dans UserComment
+        # Metadata imbedded in UserComment
         comment = ", ".join(f"{k}={v}" for k, v in last_row.items())
         camera_info = f", iso={params['iso']}, name={params['name']}, shutter={params['shutter']}, brightness={params['brightness']}, contrast={params['contrast']}, saturation={params['saturation']}, awb_mode={params['awb_mode']}"
         comment += camera_info

@@ -1,4 +1,5 @@
 import tkinter as tk
+import os
 from tkinter import ttk
 import json
 from tkinter import filedialog, messagebox
@@ -9,11 +10,18 @@ from matplotlib.figure import Figure
 
 class Interface(tk.Tk):
     def __init__(self, regul, timelapse_manager):
+        """
+        Initialize the main application window, UI components, and data structures.
+
+        Sets up the tabbed interface, initializes history buffers for 
+        environmental data, builds the setup/timelapse layouts, and starts 
+        the background GUI update loop.
+        """
         super().__init__()
 
         self.regul = regul
         self.timelapse = timelapse_manager
-        self.title("Arabidopsis infection monitoring")
+        self.title("Plant timelapse app")
         self.geometry(f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}+0+0")
         self.resizable(True, True)
 
@@ -112,7 +120,11 @@ class Interface(tk.Tk):
         row_folder.pack(fill="x", pady=2)
         tk.Label(row_folder, text="Save folder:", width=20, anchor="w").pack(side="left")
         self.ent_folder = tk.Entry(row_folder, width=15)
-        #self.ent_folder.insert(0) # No default folder
+
+        root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        data_dir = os.path.join(root_dir, "data")
+        self.ent_folder.insert(0, data_dir)
+
         self.ent_folder.pack(side="left", padx=5)
         tk.Button(row_folder, text="Browse", command=self.browse_folder).pack(side="left")
 
@@ -158,7 +170,7 @@ class Interface(tk.Tk):
         awb_menu.pack(side="left", padx=5)
         self.timelapse_entries["awb_mode"] = awb_var
 
-        # Cycle day/night bloc
+        # Day/night Cycle bloc
         frm_cycle = tk.LabelFrame(col_right, text="Day / Night Cycle", padx=5, pady=5)
         frm_cycle.pack(fill="x", padx=8, pady=5)
 
@@ -271,9 +283,12 @@ class Interface(tk.Tk):
             self.bind_all("<Button-5>", lambda e: self.scroll_canvas_timelapse.yview_scroll(1, "units"))
         ])
 
+        frm_top_row = tk.Frame(inner)
+        frm_top_row.pack(fill="x", padx=8, pady=5)
+
         # Status bloc
-        frm_status = tk.LabelFrame(inner, text="Timelapse Status", padx=5, pady=5)
-        frm_status.pack(fill="x", padx=8, pady=5)
+        frm_status = tk.LabelFrame(frm_top_row, text="Timelapse Status", padx=5, pady=5)
+        frm_status.pack(side="left", fill="both", expand=True, padx=(0, 5))
 
         self.lbl_status = tk.Label(frm_status, text="Status: OFF", anchor="w", font=("Arial", 10, "bold"))
         self.lbl_status.pack(fill="x")
@@ -283,6 +298,19 @@ class Interface(tk.Tk):
         self.lbl_time_left.pack(fill="x")
         self.lbl_next_pict = tk.Label(frm_status, text="Next picture: --", anchor="w")
         self.lbl_next_pict.pack(fill="x")
+
+        # Modules bloc
+        frm_modules = tk.LabelFrame(frm_top_row, text="Components", padx=5, pady=5)
+        frm_modules.pack(side="left", fill="both", expand=True, padx=(5, 0))
+
+        self.status_indicators = {}
+        for module in ["heat", "mist", "light"]:
+            row = tk.Frame(frm_modules)
+            row.pack(fill="x", pady=2)
+            tk.Label(row, text=f"{module.upper()} :", width=10, anchor="w", font=("Arial", 10)).pack(side="left")
+            indicator = tk.Label(row, width=2, height=1, relief="sunken", bg="white")
+            indicator.pack(side="left", padx=10)
+            self.status_indicators[module] = indicator
 
         # Day/night timeline bloc 
         frm_timeline = tk.LabelFrame(inner, text="Day / Night Cycle", padx=5, pady=5)
@@ -299,15 +327,6 @@ class Interface(tk.Tk):
         tk.Label(row_legend, width=2, bg="#2C3E50").pack(side="left")
         tk.Label(row_legend, text="Night (0%)").pack(side="left")
 
-        # Sensors bloc
-        frm_sensors = tk.LabelFrame(inner, text="Environment", padx=5, pady=5)
-        frm_sensors.pack(fill="x", padx=8, pady=5)
-
-        self.lbl_temp = tk.Label(frm_sensors, text="Temperature: -- °C", anchor="w")
-        self.lbl_temp.pack(fill="x")
-        self.lbl_hum = tk.Label(frm_sensors, text="Humidity: -- %", anchor="w")
-        self.lbl_hum.pack(fill="x")
-
         # Graph 
         frm_graph = tk.LabelFrame(inner, text="Environment", padx=5, pady=5)
 
@@ -320,23 +339,14 @@ class Interface(tk.Tk):
         self.fig.tight_layout(pad=1.0)
 
         self.canvas_plot = FigureCanvasTkAgg(self.fig, master=frm_graph)
-        self.canvas_plot.get_tk_widget().pack(fill="both", expand=True, padx=2, pady=2)
+        self.canvas_plot.get_tk_widget().pack(fill="both", expand=True) # , padx=2, pady=2
 
-        # Modules bloc
-        frm_modules = tk.LabelFrame(inner, text="Components", padx=5, pady=5)
-        frm_modules.pack(fill="x", padx=8, pady=5)
-
-        self.status_indicators = {}
-        for module in ["heat", "mist", "light"]:
-            row = tk.Frame(frm_modules)
-            row.pack(fill="x", pady=2)
-            tk.Label(row, text=f"{module.upper()} :", width=10, anchor="w", font=("Arial", 10)).pack(side="left")
-            indicator = tk.Label(row, width=2, height=1, relief="sunken", bg="white")
-            indicator.pack(side="left", padx=10)
-            self.status_indicators[module] = indicator
+    
 
     def _start_timelapse(self):
         self.timelapse.start_timelapse()
+        self.update_target_temp()
+        self.update_target_hum()
         self.notebook.add(self.tab_timelapse, text=f"Timelapse -- {self.timelapse_entries['exp_name'].get()}")
         self.notebook.select(self.tab_timelapse)
 
@@ -345,28 +355,30 @@ class Interface(tk.Tk):
         self.notebook.hide(self.tab_timelapse)
         self.notebook.select(self.tab_setup)
 
+    
     def update_gui(self):
-        data = self.regul.live_data
-        t = data["temp"]
-        h = data["hum"]
+        """
+        Refresh the user interface with the latest sensor data and system states.
 
-        self.lbl_temp.config(text=f"Temperature: {t:.1f} °C → {self.regul.target_temp}" if t is not None else "Temperature: ERR")
-        self.lbl_hum.config(text=f"Humidity: {h:.1f} % → {self.regul.target_hum}" if h is not None else "Humidity: ERR")
-        
-        if t is not None:
-            self.temp_history.append(t)
+        This method updates environmental labels, plots sensor history, manages 
+        component status indicators, and handles the timelapse countdown logic. 
+        It self-schedules its next execution every 1000ms.
+        """
+        data = self.regul.live_data
+        self.t = data["temp"]
+        self.h = data["hum"]
+
+        if self.t is not None:
+            self.temp_history.append(self.t)
             if len(self.temp_history) > self.history_limit:
                 self.temp_history.pop(0)
         
-        if h is not None:
-            self.hum_history.append(h)
+        if self.h is not None:
+            self.hum_history.append(self.h)
             if len(self.hum_history) > self.history_limit:
                 self.hum_history.pop(0)
 
         self.draw_plots()
-
-        self.lbl_temp.config(text=f"Temperature: {t:.1f} °C -> {self.regul.target_temp}" if t is not None else "Temp: ERR")
-        self.lbl_hum.config(text=f"Humidity: {h:.1f} % -> {self.regul.target_hum}" if h is not None else "Hum: ERR")
 
         for module in ["heat", "mist", "light"]:
             is_on = data.get(module, False)
@@ -445,16 +457,24 @@ class Interface(tk.Tk):
     def update_target_temp(self):
         try:
             val = float(self.ent_temp.get())
-            self.regul.target_temp = val
-            print(f"Temperature target value set to : {val}°C")
+
+            if val != self.regul.target_temp :
+                self.regul.target_temp = val
+                print(f"Temperature target value set to : {val}°C")
+                messagebox.showinfo("Temp set",f"Temperature target value set to : {val}°C")
+
         except ValueError:
             print("Enter a valid value for temperature")
 
     def update_target_hum(self):
         try:
             val = int(self.ent_hum.get())
-            self.regul.target_hum = val
-            print(f"Humidity target value set to : {val}%")
+
+            if val != self.regul.target_hum :
+                self.regul.target_hum = val
+                print(f"Humidity target value set to : {val}%")
+                messagebox.showinfo("Hum set",f"Humidity target value set to : {val}°C")
+
         except ValueError:
             print("Enter a valid value for humidity")
 
@@ -498,10 +518,19 @@ class Interface(tk.Tk):
             self.ent_hum.insert(0, data.get("target_hum", ""))
             self.ent_folder.delete(0, tk.END)
             self.ent_folder.insert(0, data.get("folder", ""))
+
             for p_id, value in data.get("timelapse_params", {}).items():
                 if p_id in self.timelapse_entries:
-                    self.timelapse_entries[p_id].delete(0, tk.END)
-                    self.timelapse_entries[p_id].insert(0, value)
+                    item = self.timelapse_entries[p_id]
+                    
+                    # Check for other sort of entries exemple AWD Mode
+                    if isinstance(item, tk.StringVar):
+                        item.set(value)
+                    else:
+                        item.delete(0, tk.END)
+                        item.insert(0, value)
+
+            # Application des valeurs à la régulation
             self.update_target_temp()
             self.update_target_hum()
             messagebox.showinfo('Done', f'Template loaded : {filepath}')
@@ -535,32 +564,37 @@ class Interface(tk.Tk):
             print(f"Test intensity set to {val}%")
         except ValueError:
             print("Invalid value")
-    
-    def draw_plots(self):
-        # Temperature
-        self.ax_t.clear()
-        self.ax_t.grid(True, linestyle='--', alpha=0.7)
-        if self.temp_history:
-            self.ax_t.plot(self.temp_history, color='red', linewidth=2)
-        self.ax_t.set_xticks([])
-        
-        target_t = self.regul.target_temp
-        self.ax_t.axhline(target_t, color='green', linestyle='-', label='Cible')
 
-        # Humidity
-        self.ax_h.clear()
-        self.ax_h.set_title(" ↑ Temperature (%) ↑ | ↓ Humidity (%) ↓ ")
-        self.ax_h.grid(True, linestyle='--', alpha=0.7)
-        if self.hum_history:
-            self.ax_h.plot(self.hum_history, color='blue', linewidth=2)
-        self.ax_h.set_xticks([])
+    def draw_plots(self):
+        configs = [
+            (self.temp_history, self.ax_t, 'red', f"Temperature = {self.t:.1f} °C - Target = {self.regul.target_temp} °C", self.regul.target_temp),
+            (self.hum_history, self.ax_h, 'blue', f"Humidity = {self.h:.1f} % - Target = {self.regul.target_hum} %", self.regul.target_hum)
+        ]
+
+        for data, ax, color, title, target in configs:
+            ax.clear()
+            
+            ax.grid(True, linestyle=':', alpha=0.6)
+            ax.set_facecolor('#f9f9f9')
+            
+            if data:
+                ax.plot(data, color=color, linewidth=1.5, alpha=0.9)
+                
+                ax.fill_between(range(len(data)), data, color=color, alpha=0.1)
+            
+            ax.axhline(target, color="#2e7d2e", linestyle='--', linewidth=1.2, label='Cible')
+            
+            ax.set_xticks([])
+            ax.set_title(title, color=color, fontweight='semibold', fontsize=10, pad=10)
+            
+            for spine in ax.spines.values():
+                spine.set_edgecolor('#cccccc')
         
-        target_h = self.regul.target_hum
-        self.ax_h.axhline(target_h, color='green', linestyle='-', label='Cible')
+        self.canvas_plot.figure.tight_layout()
 
         self.canvas_plot.draw()
 
     def on_closing(self):
         self.regul.stop()
-    
+
         self.destroy()
