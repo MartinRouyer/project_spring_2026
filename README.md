@@ -10,16 +10,16 @@ The setup is built around a Raspberry Pi 5. The following components are connect
 
 | Category | Component | Model | GPIO pin |
 |---|---|---|---|
-| SBC | Single Board Computer | Raspberry Pi 5 4GB | — |
-| Camera | Camera module | — | CSI |
+| SBC | Single Board Computer | Raspberry Pi 5 4GB | -- |
+| Camera | Camera module | -- | CSI |
 | Sensing | Temp. & Humidity sensor | DHT22 module | 4 |
 | Lighting | LED strip | CCT 24V IP65 60LED/m, driven via MOSFET module | 23 |
 | Actuators | Ultrasonic fogger | 5V 20mm USB atomizer module | 17 |
 | | Heating mat | TRU COMPONENTS 12V/AC 32W polyester | 27 |
-| Power | Main PSU | ALITOVE 12V 5A 60W | — |
-| | DC-DC step-down | Greluma 12V→5V 5A 25W | — |
-| | MOSFET driver | 5V-36V 15A 400W PWM switch module | — |
-| | Fuse box | Vaskula 4-way 12V | — |
+| Power | Main PSU | ALITOVE 12V 5A 60W | -- |
+| | DC-DC step-down | Greluma 12V→5V 5A 25W | -- |
+| | MOSFET driver | 5V-36V 15A 400W PWM switch module | -- |
+| | Fuse box | Vaskula 4-way 12V | -- |
 | Display | Touchscreen | Freenove 7" 800x480 IPS MIPI DSI | DSI |
 
 ## Installation
@@ -63,7 +63,7 @@ mode_simu = True
  
 ```
 app/
-├── main.py        Entry point — hardware selection and object wiring
+├── main.py        Entry point -- hardware selection and object wiring
 ├── hardware.py    RealHardware and MockHardware classes
 ├── regulation.py  Sensor reading loop, actuator control, CSV logging
 ├── timelapse.py   Image capture scheduling and EXIF metadata embedding
@@ -84,9 +84,9 @@ The regulation loop runs every 5 seconds in a background thread. The target temp
 
 The control logic is a simple on/off mechanism:
 
-- **Heating mat** — turns on when temperature drops below `target_temp - margin_temp`, turns off when it exceeds `target_temp`
-- **Fogger** — turns on when humidity drops below `target_hum - margin_hum`, turns off when it exceeds `target_hum - margin_hum/2`
-- **LED strip** — switches on/off according to the position in the day/night cycle, calculated from the cycle start time
+- **Heating mat** -- turns on when temperature drops below `target_temp - margin_temp`, turns off when it exceeds `target_temp`
+- **Fogger** -- turns on when humidity drops below `target_hum - margin_hum`, turns off when it exceeds `target_hum - margin_hum/2`
+- **LED strip** -- switches on/off according to the position in the day/night cycle, calculated from the cycle start time
 
 Margins are defined in `regulation.py` (`margin_temp`, `margin_hum`).
 
@@ -132,10 +132,10 @@ if temp2 is not None:
 
 **Regarding dependencies:**
 
-- If the component is controlled via a MOSFET module, no new library is needed — `gpiozero` and `OutputDevice` are already used in `hardware.py` for the existing actuators.
+- If the component is controlled via a MOSFET module, no new library is needed -- `gpiozero` and `OutputDevice` are already used in `hardware.py` for the existing actuators.
 - If the component is powered directly by the Raspberry Pi GPIO and requires a dedicated library, add it to `pyproject.toml` and run `uv sync`, or install it as a system package with `sudo apt-get install`.
 
-**Example — adding a fan controlled via MOSFET:**
+**Example -- adding a fan controlled via MOSFET:**
 
 In `hardware.py`, in `RealHardware.__init__`:
 ```python
@@ -203,8 +203,8 @@ For each experiment, the following are saved to `data/` by default (configurable
 
 ## Authors
 
-Séverin JORRY & Martin ROUYER — Master 2 Bioinformatics, Lyon 1
+Séverin JORRY & Martin ROUYER -- Master 2 Bioinformatics, Lyon 1
 
-**Project supervisor:** Adel Amine GANI — MAP Laboratory UMR5240, Lyon 1 / INSA Lyon / CNRS
+**Project supervisor:** Adel Amine GANI -- MAP Laboratory UMR5240, Lyon 1 / INSA Lyon / CNRS
 
-**Acknowledgements:** Matthieu — for his help with the electrical assembly
+**Acknowledgements:** Matthieu -- for his help with the electrical assembly
